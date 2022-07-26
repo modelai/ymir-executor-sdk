@@ -4,7 +4,7 @@ import os
 import time
 from typing import Dict, List, Tuple
 
-from easydict import EasyDict as edict
+from pydantic import BaseModel
 import yaml
 
 from ymir_exc import env
@@ -12,17 +12,17 @@ from ymir_exc import env
 _MAX_MODEL_STAGES_COUNT_ = 11  # 10 latest stages, 1 best stage
 
 
-# class Box(BaseModel):
-#     x: int
-#     y: int
-#     w: int
-#     h: int
+class Box(BaseModel):
+    x: int
+    y: int
+    w: int
+    h: int
 
 
-# class Annotation(BaseModel):
-#     class_name: str
-#     score: float
-#     box: Box
+class Annotation(BaseModel):
+    class_name: str
+    score: float
+    box: Box
 
 
 def write_model_stage(stage_name: str,
@@ -33,9 +33,9 @@ def write_model_stage(stage_name: str,
         raise ValueError('empty stage_name or files')
     if not stage_name.isidentifier():
         raise ValueError(
-            "invalid stage_name: %, need alphabets, numbers and underlines, start with alphabets"%(stage_name))
+            f"invalid stage_name: {stage_name}, need alphabets, numbers and underlines, start with alphabets")
 
-    training_result = {}  # key: stage name, value: stage name, files, timestamp, mAP
+    training_result: dict = {}  # key: stage name, value: stage name, files, timestamp, mAP
 
     env_config = env.get_current_env()
     try:
@@ -65,7 +65,7 @@ def write_model_stage(stage_name: str,
         if del_stage_name == training_result['best_stage_name']:
             del_stage_name = sorted_model_stages[1]['stage_name']
         del model_stages[del_stage_name]
-        logging.info("data_writer removed model stage: %s"%(del_stage_name))
+        logging.info(f"data_writer removed model stage: {del_stage_name}")
     training_result['model_stages'] = model_stages
 
     # save all
@@ -84,21 +84,14 @@ def write_mining_result(mining_result: List[Tuple[str, float]]) -> None:
     env_config = env.get_current_env()
     with open(env_config.output.mining_result_file, 'w') as f:
         for asset_id, score in sorted_mining_result:
-            f.write("%s\t%f\n"%(asset_id, score))
+            f.write(f"{asset_id}\t{score}\n")
 
 
-def write_infer_result(infer_result: Dict[str, List[dict]]) -> None:
+def write_infer_result(infer_result: Dict[str, List[Annotation]]) -> None:
     detection_result = {}
     for asset_path, annotations in infer_result.items():
         asset_basename = os.path.basename(asset_path)
-        if len(annotations) > 0:
-            for key in ['class_name','score','box']:
-                assert annotations[0].has_key(key), 'invalid annotations %s'%(annotations[0])
-            box = annotations[0]['box']
-            if len(box) > 1:
-                for key in ['x','y','w','h']:
-                    assert box.has_key(key), 'invalid box %s'%(annotations[0])
-        detection_result[asset_basename] = {'annotations': [annotation for annotation in annotations]}
+        detection_result[asset_basename] = {'annotations': [annotation.dict() for annotation in annotations]}
 
     result = {'detection': detection_result}
     env_config = env.get_current_env()

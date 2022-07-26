@@ -45,7 +45,7 @@ output:
 
 from enum import IntEnum, auto
 
-from easydict import EasyDict as edict
+from pydantic import BaseModel
 import yaml
 
 from ymir_exc import settings
@@ -58,11 +58,44 @@ class DatasetType(IntEnum):
     CANDIDATE = auto()
 
 
-def get_current_env() -> edict:
+class EnvInputConfig(BaseModel):
+    root_dir: str = '/in'
+    assets_dir: str = '/in/assets'
+    annotations_dir: str = '/in/annotations'
+    models_dir: str = '/in/models'
+    training_index_file: str = ''
+    val_index_file: str = ''
+    candidate_index_file: str = ''
+    config_file: str = '/in/config.yaml'
+
+
+class EnvOutputConfig(BaseModel):
+    root_dir: str = '/out'
+    models_dir: str = '/out/models'
+    tensorboard_dir: str = '/out/tensorboard'
+    training_result_file: str = '/out/models/result.yaml'
+    mining_result_file: str = '/out/result.tsv'
+    infer_result_file: str = '/out/infer-result.json'
+    monitor_file: str = '/out/monitor.txt'
+    executor_log_file: str = '/out/ymir-executor-out.log'
+
+
+class EnvConfig(BaseModel):
+    task_id: str = 'default-task'
+    run_training: bool = False
+    run_mining: bool = False
+    run_infer: bool = False
+
+    input: EnvInputConfig = EnvInputConfig()
+    output: EnvOutputConfig = EnvOutputConfig()
+
+
+def get_current_env() -> EnvConfig:
     with open(settings.DEFAULT_ENV_FILE_PATH, 'r') as f:
-        return edict(yaml.safe_load(f.read()))
+        return EnvConfig.parse_obj(yaml.safe_load(f.read()))
 
 
-def get_executor_config() -> edict:
+def get_executor_config() -> dict:
     with open(get_current_env().input.config_file, 'r') as f:
-        return edict(yaml.safe_load(f))
+        executor_config = yaml.safe_load(f)
+    return executor_config

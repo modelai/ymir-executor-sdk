@@ -1,9 +1,9 @@
 from typing import Iterator, Tuple
-from easydict import EasyDict as edict
+
 from ymir_exc import env
 
 
-def _index_file_for_dataset_type(env_config: edict, dataset_type: env.DatasetType) -> str:
+def _index_file_for_dataset_type(env_config: env.EnvConfig, dataset_type: env.DatasetType) -> str:
     mapping = {
         env.DatasetType.TRAINING: env_config.input.training_index_file,
         env.DatasetType.VALIDATION: env_config.input.val_index_file,
@@ -15,7 +15,7 @@ def _index_file_for_dataset_type(env_config: edict, dataset_type: env.DatasetTyp
 def item_paths(dataset_type: env.DatasetType) -> Iterator[Tuple[str, str]]:
     file_path = _index_file_for_dataset_type(env.get_current_env(), dataset_type)
     if not file_path:
-        raise ValueError("index file not set for dataset: %s"%(dataset_type))
+        raise ValueError(f"index file not set for dataset: {dataset_type}")
 
     with open(file_path, 'r') as f:
         for line in f:
