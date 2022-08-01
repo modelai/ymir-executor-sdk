@@ -4,8 +4,8 @@ import os
 import time
 from typing import Dict, List, Tuple
 
-from pydantic import BaseModel
 import yaml
+from pydantic import BaseModel
 
 from ymir_exc import env
 
@@ -43,7 +43,7 @@ def write_model_stage(stage_name: str,
             training_result = yaml.safe_load(stream=f)
     except FileNotFoundError:
         pass  # will create new if not exists, so dont care this exception
-    
+
     _files = training_result.get('model', [])
 
     training_result = {
