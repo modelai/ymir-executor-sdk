@@ -2,10 +2,11 @@ import json
 import os
 import os.path as osp
 import socket
+from typing import Dict, List
 
 import imagesize
 from easydict import EasyDict as edict
-from typing import Dict, List, Union
+
 from ymir_exc import env
 
 
