@@ -34,8 +34,9 @@ def get_merged_config() -> edict:
     merged_cfg.ymir = env.get_current_env()
     return merged_cfg
 
-def convert_ymir_to_coco():
+def convert_ymir_to_coco(cat_id_from_zero=False):
     """
+    cat_id_from_zero: category id start from zero or not
     ymir_index_file: for each line it likes: {img_path} \t {ann_path}
     output the coco dataset information
     """
@@ -59,7 +60,7 @@ def convert_ymir_to_coco():
                     licenses=[]
                     )
 
-        cat_id_start = 1
+        cat_id_start = 0 if cat_id_from_zero else 1
         for id, name in enumerate(cfg.param.class_names):
             data['categories'].append(dict(id=id + cat_id_start,
                                            name=name,
