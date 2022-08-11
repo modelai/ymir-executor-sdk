@@ -230,6 +230,8 @@ def _write_ancient_ymir_training_result(cfg: edict,
         with open(training_result_file, 'r') as f:
             training_result = yaml.safe_load(stream=f)
 
+        if training_result is None:
+            training_result = {}
         training_result['model'] = files
         max_map50 = max(training_result.get('map', 0), map50)
         training_result['map'] = max_map50
