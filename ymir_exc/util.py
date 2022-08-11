@@ -224,7 +224,7 @@ def _write_ancient_ymir_training_result(cfg: edict,
     if not files:
         # save other files with best map50, use relative path, filter out directory.
         root_dir = cfg.ymir.output.models_dir
-        files = [osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir, '**','*'), recursive=True) if osp.isfile(f)]
+        files = [osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir,'*')) if osp.isfile(f)]
     training_result_file = cfg.ymir.output.training_result_file
     if osp.exists(training_result_file):
         with open(training_result_file, 'r') as f:
