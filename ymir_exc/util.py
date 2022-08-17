@@ -64,7 +64,9 @@ def get_ymir_process(stage: YmirStage, p: float, task_idx: int = 0, task_num: in
 
 def get_merged_config() -> edict:
     """
-    merge ymir_config and executor_config
+    view https://github.com/yzbx/ymir-executor-fork/wiki/input-(-in)-and-output-(-out)-for-docker-image for detail
+    merged_cfg.param: read from /in/config.yaml
+    merged_cfg.ymir: read from /in/env.yaml
     """
     merged_cfg = edict()
     # the hyperparameter information
@@ -75,7 +77,7 @@ def get_merged_config() -> edict:
     return merged_cfg
 
 
-def convert_ymir_to_coco(cat_id_from_zero=False):
+def convert_ymir_to_coco(cat_id_from_zero: bool=False):
     """
     convert ymir dataset to coco format for training task
     cat_id_from_zero: category id start from zero or not
@@ -168,6 +170,22 @@ def get_weight_files(cfg: edict, suffix: Tuple[str, ...]=('.pt','.pth')) -> List
 
     return model_params_path
 
+def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
+    v = cfg.param.get(key, default_value)
+
+    if isinstance(v, str):
+        if v.lower() in ['f', 'false', '1']:
+            v = False
+        elif v.lower() in ['t', 'true', '0']:
+            v = True
+        else:
+            raise Exception(f'unknown bool str {key} = {v}')
+    elif isinstance(v, int):
+        return bool(v)
+    elif isinstance(v, bool):
+        return v
+
+    raise Exception(f'unknown bool type {key} = {v} ({type(v)})')
 
 def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: str) -> None:
     """
