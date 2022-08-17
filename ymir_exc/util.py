@@ -174,9 +174,9 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
     v = cfg.param.get(key, default_value)
 
     if isinstance(v, str):
-        if v.lower() in ['f', 'false', '1']:
+        if v.lower() in ['f', 'false', '0']:
             v = False
-        elif v.lower() in ['t', 'true', '0']:
+        elif v.lower() in ['t', 'true', '1']:
             v = True
         else:
             raise Exception(f'unknown bool str {key} = {v}')
