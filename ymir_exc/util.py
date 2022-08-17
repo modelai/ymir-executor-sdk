@@ -201,7 +201,7 @@ def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: s
     if Version(YMIR_VERSION) >= Version('1.2.0'):
         _write_latest_ymir_training_result(cfg, float(map50), id, files)
     else:
-        _write_ancient_ymir_training_result(cfg, float(map50), id, files)
+        _write_earliest_ymir_training_result(cfg, float(map50), id, files)
 
 def _write_latest_ymir_training_result(cfg: edict,
                                        map50: float,
@@ -231,7 +231,7 @@ def _write_latest_ymir_training_result(cfg: edict,
                              mAP=map50)
 
 
-def _write_ancient_ymir_training_result(cfg: edict,
+def _write_earliest_ymir_training_result(cfg: edict,
         map50: float,
         id: str,
         files: List[str]) -> None:
