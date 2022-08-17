@@ -15,11 +15,10 @@ class Executor(object):
                                  infer='python3 ymir/ymir_infer.py')
 
     def start(self) -> int:
-        logging.basicConfig(
-            stream=sys.stdout,
-            format='%(levelname)-8s: [%(asctime)s] %(message)s',
-            datefmt='%Y%m%d-%H:%M:%S',
-            level=logging.INFO)
+        logging.basicConfig(stream=sys.stdout,
+                            format='%(levelname)-8s: [%(asctime)s] %(message)s',
+                            datefmt='%Y%m%d-%H:%M:%S',
+                            level=logging.INFO)
 
         cfg = get_merged_config()
 
@@ -61,17 +60,11 @@ class Executor(object):
         logging.info(f'mining: {command}')
         subprocess.run(command.split(), check=True)
         monitor.write_monitor_logger(
-            percent=get_ymir_process(stage=YmirStage.POSTPROCESS,
-                                     p=1,
-                                     task_idx=task_idx,
-                                     task_num=task_num))
+            percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1, task_idx=task_idx, task_num=task_num))
 
     def _run_infer(self, task_idx: int = 0, task_num: int = 1) -> None:
         command = self.apps['infer']
         logging.info(f'infer: {command}')
         subprocess.run(command.split(), check=True)
         monitor.write_monitor_logger(
-            percent=get_ymir_process(stage=YmirStage.POSTPROCESS,
-                                     p=1,
-                                     task_idx=task_idx,
-                                     task_num=task_num))
+            percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1, task_idx=task_idx, task_num=task_num))
