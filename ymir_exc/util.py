@@ -10,7 +10,6 @@ from typing import Dict, List, Tuple
 import imagesize
 import yaml
 from easydict import EasyDict as edict
-from packaging.version import Version
 
 from ymir_exc import env
 from ymir_exc import result_writer as rw
@@ -35,35 +34,80 @@ class YmirStage(IntEnum):
     POSTPROCESS = 3  # export model
 
 
-def get_ymir_process(stage: YmirStage, p: float, task_idx: int = 0, task_num: int = 1) -> float:
-    """
+class YmirStageWeight(object):
+
+    def __init__(self, weights: List[float] = None):
+        """
+        weights: weight for each ymir stage
+        if weights is None:
+            self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.1))
+            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.8))
+            self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.1))
+        """
+        if weights:
+            self.weights = weights
+        else:
+            self.weights = [0, 0, 0]
+            self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.1))
+            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.8))
+            self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.1))
+
+        assert sum(self.weights) == 1, f'sum of weights {weights} != 1'
+        assert len(self.weights) == 3, f'len of weights {weights} != 3'
+
+    def get_stage_process(self, stage: YmirStage, p: float) -> float:
+        """return the stage process for a task, range in [0, 1]
+        for preprocess stage:
+            return process range in [0, self.weight[0]]
+        for task stage:
+            return process range in [self.weights[0], self.weight[0]+self.weight[1]]
+        for postprocess stage:
+            return process range in [self.weight[0]+self.weight[1], 1]
+        """
+        if stage == YmirStage.PREPROCESS:
+            return self.weights[0] * p
+        elif stage == YmirStage.TASK:
+            return self.weights[0] + self.weights[1] * p
+        elif stage == YmirStage.POSTPROCESS:
+            return self.weights[0] + self.weights[1] + self.weights[2] * p
+        else:
+            raise NotImplementedError(f'unknown stage {stage}')
+
+
+def get_ymir_process(stage: YmirStage,
+                     p: float,
+                     task_idx: int = 0,
+                     task_num: int = 1,
+                     weights: YmirStageWeight = None) -> float:
+    """return the process for ymir, range in [0,1]
     stage: pre-process/task/post-process
-    p: percent for stage
+    p: percent for stage, range in [0,1]
     task_idx: index for multiple tasks like mining (task_idx=0) and infer (task_idx=1)
     task_num: the total number of multiple tasks.
+
+    for single task:
+        task_idx = 0, task_num = 1
+        return process range in [0, 1]
+
+    for multiple tasks:
+        the first task: task_idx = 0, task_num = 2
+        return the first process range in [0, 0.5]
+        the second task: task_idx = 1, task_num = 2
+        return the second process range in [0.5, 1]
     """
-    # const value for ymir process
-    PREPROCESS_PERCENT = int(os.getenv('PREPROCESS_PERCENT', 0.1))
-    TASK_PERCENT = int(os.getenv('TASK_PERCENT', 0.8))
-    POSTPROCESS_PERCENT = int(os.getenv('POSTPROCESS_PERCENT', 0.1))
+    if weights is None:
+        weights = YmirStageWeight()
 
     if p < 0 or p > 1.0:
         raise Exception(f'p not in [0,1], p={p}')
 
-    ratio = 1.0 / task_num
-    init = task_idx * ratio
-    if stage == YmirStage.PREPROCESS:
-        return init + PREPROCESS_PERCENT * p * ratio
-    elif stage == YmirStage.TASK:
-        return init + (PREPROCESS_PERCENT + TASK_PERCENT * p) * ratio
-    elif stage == YmirStage.POSTPROCESS:
-        return init + (PREPROCESS_PERCENT + TASK_PERCENT + POSTPROCESS_PERCENT * p) * ratio
-    else:
-        raise NotImplementedError(f'unknown stage {stage}')
+    task_ratio = 1.0 / task_num
+    task_init = task_idx * task_ratio
+    return task_init + task_ratio * weights.get_stage_process(stage, p)
 
 
 def get_merged_config() -> edict:
-    """
+    """return all config for ymir
     view https://github.com/yzbx/ymir-executor-fork/wiki/input-(-in)-and-output-(-out)-for-docker-image for detail
     merged_cfg.param: read from /in/config.yaml
     merged_cfg.ymir: read from /in/env.yaml
@@ -166,17 +210,17 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
 
     if isinstance(v, str):
         if v.lower() in ['f', 'false', '0']:
-            v = False
+            return False
         elif v.lower() in ['t', 'true', '1']:
-            v = True
+            return True
         else:
             raise Exception(f'unknown bool str {key} = {v}')
     elif isinstance(v, int):
         return bool(v)
     elif isinstance(v, bool):
         return v
-
-    raise Exception(f'unknown bool type {key} = {v} ({type(v)})')
+    else:
+        raise Exception(f'unknown bool type {key} = {v} ({type(v)})')
 
 
 def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: str) -> None:
@@ -189,8 +233,7 @@ def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: s
     if not files and map50 > 0:
         warnings.warn(f'map50 = {map50} > 0 when save all files')
 
-    YMIR_VERSION = os.getenv('YMIR_VERSION', '1.1.0')
-    if Version(YMIR_VERSION) >= Version('1.2.0'):
+    if rw.multiple_model_stages_supportable():
         _write_latest_ymir_training_result(cfg, float(map50), id, files)
     else:
         _write_earliest_ymir_training_result(cfg, float(map50), id, files)

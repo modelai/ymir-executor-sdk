@@ -28,8 +28,8 @@ class Annotation(BaseModel):
 
 
 def multiple_model_stages_supportable() -> bool:
-    YMIR_VERSION = os.getenv('YMIR_VERSION', '1.1.0')
-    if Version(YMIR_VERSION) >= Version('1.2.0'):
+    ymir_version = os.getenv('YMIR_VERSION', '1.1.0')
+    if Version(ymir_version) >= Version('1.2.0'):
         return True
     else:
         return False
