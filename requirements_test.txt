@@ -1,1 +1,4 @@
-pytest
+pytest==3.6 ; python_version < '3.7' # supports for py3.6
+pytest>=5.4 ; python_version >= '3.7' # supports for py3.7+
+flake8
+yapf

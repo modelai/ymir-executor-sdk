@@ -17,9 +17,9 @@ ignore =
     # lowercase 'datasets.transforms' imported as non lowercase 'T'
     N812,
     # N806 variable 'N' in function should be lowercase
-    N806
-    N803
+    N806,
+    N803,
     N813
 
-disable-noqa
+# disable-noqa
 max-line-length = 121
