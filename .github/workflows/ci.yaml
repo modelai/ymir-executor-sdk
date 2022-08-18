@@ -30,7 +30,7 @@ jobs:
         run: pytest
 
       - name: Yapf format
-        run: yapf --diff --recursive .
+        run: yapf --style .style.yapf --diff --recursive .
 
       - name: Flake8 format
-        run: flake8 .
+        run: flake8 --config .flake8 .
