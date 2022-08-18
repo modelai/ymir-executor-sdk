@@ -58,12 +58,12 @@ class TestResultWriter(unittest.TestCase):
             shutil.rmtree(self._test_root)
 
     # protected: check results
-    def _check_training_result(self, model_names: List[str], mAP: float, classAPs: Dict[str, float], **kwargs) -> None:
+    def _check_training_result(self, model_names: List[str], mAP: float, class_aps: Dict[str, float], **kwargs) -> None:
         with open(self._training_result_file, 'r') as f:
             result_obj = yaml.safe_load(f)
             self.assertEqual(result_obj['model'], model_names)
             self.assertEqual(result_obj['map'], mAP)
-            self.assertEqual(result_obj['class_aps'], classAPs)
+            self.assertEqual(result_obj['class_aps'], class_aps)
             for k, v in kwargs.items():
                 self.assertEqual(result_obj[k], v)
 
@@ -83,10 +83,10 @@ class TestResultWriter(unittest.TestCase):
     def test_write_training_result(self) -> None:
         model_names = ['model-symbols.json', 'model-0000.params']
         mAP = 0.86
-        classAPs = {'cat': 0.86, 'person': 0.86}
-        rw.write_training_result(model_names=model_names, mAP=mAP, classAPs=classAPs,
+        class_aps = {'cat': 0.86, 'person': 0.86}
+        rw.write_training_result(model_names=model_names, mAP=mAP, class_aps=class_aps,
                                  author='fake author')  # type: ignore
-        self._check_training_result(model_names=model_names, mAP=mAP, classAPs=classAPs,
+        self._check_training_result(model_names=model_names, mAP=mAP, class_aps=class_aps,
                                     author='fake author')  # type ignore
 
     def test_write_mining_result(self) -> None:

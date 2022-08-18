@@ -3,8 +3,7 @@ import subprocess
 import sys
 
 from ymir_exc import monitor
-from ymir_exc.util import (YmirStage, get_bool, get_merged_config,
-                           get_ymir_process)
+from ymir_exc.util import YmirStage, get_bool, get_merged_config, get_ymir_process
 
 
 class Executor(object):
