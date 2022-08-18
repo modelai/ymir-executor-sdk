@@ -31,6 +31,8 @@ jobs:
 
       - name: Yapf format
         run: yapf --style .style.yapf --diff --recursive .
+        working-directory: .
 
       - name: Flake8 format
         run: flake8 --config .flake8 .
+        working-directory: .
