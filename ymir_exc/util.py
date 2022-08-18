@@ -16,7 +16,7 @@ from ymir_exc import result_writer as rw
 
 
 def find_free_port():
-    """
+    """find free port for DDP
     code from detectron2: https://github.com/facebookresearch/detectron2
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -121,23 +121,28 @@ def get_merged_config() -> edict:
     return merged_cfg
 
 
-def convert_ymir_to_coco(cat_id_from_zero: bool = False):
+def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, str]]:
     """
     convert ymir dataset to coco format for training task
-    cat_id_from_zero: category id start from zero or not
-    ymir_index_file: for each line it likes: {img_path} \t {ann_path}
-    output the coco dataset information
+    for the input index file:
+        ymir_index_file: for each line it likes: {img_path} \t {ann_path}
+
+    for the outout json file:
+        cat_id_from_zero: category id start from zero or not
+
+    output the coco dataset information:
+        dict(train=dict(img_dir=xxx, ann_file=xxx),
+            val=dict(img_dir=xxx, ann_file=xxx))
     """
     cfg = get_merged_config()
     out_dir = cfg.ymir.output.root_dir
-    # os.environ.setdefault('DETECTRON2_DATASETS', out_dir)
     ymir_dataset_dir = osp.join(out_dir, 'ymir_dataset')
     os.makedirs(ymir_dataset_dir, exist_ok=True)
 
     output_info = {}
     for split, prefix in zip(['train', 'val'], ['training', 'val']):
-        src_file = getattr(cfg.ymir.input, f'{prefix}_index_file')
-        with open(src_file) as fp:
+        ymir_index_file = getattr(cfg.ymir.input, f'{prefix}_index_file')
+        with open(ymir_index_file) as fp:
             lines = fp.readlines()
 
         img_id = 0
@@ -189,8 +194,8 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False):
 
 def get_weight_files(cfg: edict, suffix: Tuple[str, ...] = ('.pt', '.pth')) -> List[str]:
     """
-    return the weight file path by priority
-    find weight file in cfg.param.model_params_path or cfg.param.model_params_path
+    find weight file in cfg.param.model_params_path or cfg.param.model_params_path with `suffix`
+    return the weight file list
     """
     if cfg.ymir.run_training:
         model_params_path = cfg.param.get('pretrained_model_params', [])
@@ -206,6 +211,18 @@ def get_weight_files(cfg: edict, suffix: Tuple[str, ...] = ('.pt', '.pth')) -> L
 
 
 def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
+    """get bool hyper-parameter from ymir merged config, return default_value if not defined.
+    the value for key in cfg may str, int or bool
+        str will ignore case
+        str: f, F, false, False, 0 will return False
+        str: t, T, true, True, 1 will return True
+        int: 0 will return 0
+        int: 1 will return 1
+        bool: True will return True
+        bool: False will return False
+        other str or int will raise Exception
+    return bool
+    """
     v = cfg.param.get(key, default_value)
 
     if isinstance(v, str):
@@ -216,7 +233,10 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
         else:
             raise Exception(f'unknown bool str {key} = {v}')
     elif isinstance(v, int):
-        return bool(v)
+        if v in [0, 1]:
+            return bool(v)
+        else:
+            raise Exception(f'unknown bool int {key} = {v}')
     elif isinstance(v, bool):
         return v
     else:
@@ -224,7 +244,7 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
 
 
 def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: str) -> None:
-    """
+    """write training result to disk for ymir
     cfg: ymir merged config, view get_merged_config()
     map50: evaluation result
     files: weight and related files to save, [] means save all files in /out/models
