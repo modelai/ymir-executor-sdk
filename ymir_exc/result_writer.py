@@ -2,10 +2,12 @@ import json
 import logging
 import os
 import time
+import warnings
 from typing import Dict, List, Tuple
 
-from pydantic import BaseModel
 import yaml
+from packaging.version import Version
+from pydantic import BaseModel
 
 from ymir_exc import env
 
@@ -25,10 +27,15 @@ class Annotation(BaseModel):
     box: Box
 
 
-def write_model_stage(stage_name: str,
-                      files: List[str],
-                      mAP: float,
-                      timestamp: int = None) -> None:
+def multiple_model_stages_supportable() -> bool:
+    ymir_version = os.getenv('YMIR_VERSION', '1.1.0')
+    if Version(ymir_version) >= Version('1.2.0'):
+        return True
+    else:
+        return False
+
+
+def write_model_stage(stage_name: str, files: List[str], mAP: float, timestamp: int = None) -> None:
     if not stage_name or not files:
         raise ValueError('empty stage_name or files')
     if not stage_name.isidentifier():
@@ -44,37 +51,57 @@ def write_model_stage(stage_name: str,
     except FileNotFoundError:
         pass  # will create new if not exists, so dont care this exception
 
-    model_stages = training_result.get('model_stages', {})
+    if multiple_model_stages_supportable():
+        model_stages = training_result.get('model_stages', {})
 
-    model_stages[stage_name] = {
-        'stage_name': stage_name,
-        'files': files,
-        'timestamp': timestamp or int(time.time()),
-        'mAP': mAP
-    }
+        model_stages[stage_name] = {
+            'stage_name': stage_name,
+            'files': files,
+            'timestamp': timestamp or int(time.time()),
+            'mAP': mAP
+        }
 
-    # best stage
-    sorted_model_stages = sorted(model_stages.values(), key=lambda x: (x.get('mAP', 0), x.get('timestamp', 0)))
-    training_result['best_stage_name'] = sorted_model_stages[-1]['stage_name']
-    training_result['map'] = sorted_model_stages[-1]['mAP']
+        # best stage
+        sorted_model_stages = sorted(model_stages.values(), key=lambda x: (x.get('mAP', 0), x.get('timestamp', 0)))
+        training_result['best_stage_name'] = sorted_model_stages[-1]['stage_name']
+        training_result['map'] = sorted_model_stages[-1]['mAP']
 
-    # if too many stages, remove a earlest one
-    if len(model_stages) > _MAX_MODEL_STAGES_COUNT_:
-        sorted_model_stages = sorted(model_stages.values(), key=lambda x: x.get('timestamp', 0))
-        del_stage_name = sorted_model_stages[0]['stage_name']
-        if del_stage_name == training_result['best_stage_name']:
-            del_stage_name = sorted_model_stages[1]['stage_name']
-        del model_stages[del_stage_name]
-        logging.info(f"data_writer removed model stage: {del_stage_name}")
-    training_result['model_stages'] = model_stages
+        # if too many stages, remove a earlest one
+        if len(model_stages) > _MAX_MODEL_STAGES_COUNT_:
+            sorted_model_stages = sorted(model_stages.values(), key=lambda x: x.get('timestamp', 0))
+            del_stage_name = sorted_model_stages[0]['stage_name']
+            if del_stage_name == training_result['best_stage_name']:
+                del_stage_name = sorted_model_stages[1]['stage_name']
+            del model_stages[del_stage_name]
+            logging.info(f"data_writer removed model stage: {del_stage_name}")
+        training_result['model_stages'] = model_stages
+    else:
+        warnings.warn('mutiple model stages is not supported, use write_training_result() instead')
+        _files = training_result.get('model', [])
+
+        training_result = {
+            'model': list(set(files + _files)),
+            'map': mAP,
+            'timestamp': timestamp or int(time.time()),
+            'stage_name': stage_name
+        }
 
     # save all
     with open(env_config.output.training_result_file, 'w') as f:
         yaml.safe_dump(data=training_result, stream=f)
 
 
-def write_training_result(model_names: List[str], mAP: float, classAPs: Dict[str, float], **kwargs: dict) -> None:
-    write_model_stage(stage_name='default_best_stage', files=model_names, mAP=mAP)
+def write_training_result(model_names: List[str], mAP: float, **kwargs: dict) -> None:
+    if multiple_model_stages_supportable():
+        warnings.warn('multiple model stages is supported, use write_model_stage() instead')
+        write_model_stage(stage_name='default_best_stage', files=model_names, mAP=mAP)
+    else:
+        training_result = {'model': model_names, 'map': mAP}
+        training_result.update(kwargs)
+
+        env_config = env.get_current_env()
+        with open(env_config.output.training_result_file, 'w') as f:
+            yaml.safe_dump(training_result, f)
 
 
 def write_mining_result(mining_result: List[Tuple[str, float]]) -> None:

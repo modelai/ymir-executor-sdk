@@ -1,0 +1,25 @@
+[flake8]
+ignore =
+    # 'toml' imported but unused
+    # F401,
+    # closing bracket does not match visual indentation
+    # E124,
+    # continuation line over-indented for hanging indent
+    # E126,
+    # visually indented line with same indent as next logical line,
+    # E129,
+    # line break before binary operator
+    # W503,
+    # line break after binary operator
+    W504,
+    # camelcase 'PostProcess' imported as lowercase 'postprocess_vidt'
+    N813,
+    # lowercase 'datasets.transforms' imported as non lowercase 'T'
+    N812,
+    # N806 variable 'N' in function should be lowercase
+    N806
+    N803
+    N813
+
+disable-noqa
+max-line-length = 121

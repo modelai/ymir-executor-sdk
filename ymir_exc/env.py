@@ -2,51 +2,52 @@
 
 ## contents of env.yaml
 ```
-task_id: task0
-run_training: True
-run_mining: True
-run_infer: True
+task_id: t000000100000166d7761660213748
+run_training: true
+run_mining: false
+run_infer: false
 input:
-    root_dir: /in
-    assets_dir: assets
-    annotations_dir: annotations
-    models_dir: models
-    training_index_file: train-index.tsv
-    val_index_file: val-index.tsv
-    candidate_index_file: candidate-index.tsv
-    config_file: config.yaml
+  annotations_dir: /in/annotations
+  assets_dir: /in/assets
+  candidate_index_file: /in/candidate-index.tsv
+  config_file: /in/config.yaml
+  models_dir: /in/models
+  root_dir: /in
+  training_index_file: /in/train-index.tsv
+  val_index_file: /in/val-index.tsv
 output:
-    root_dir: /out
-    models_dir: models
-    tensorboard_dir: tensorboard
-    training_result_file: result.yaml
-    mining_result_file: result.txt
-    infer_result_file: infer-result.yaml
-    monitor_file: monitor.txt
+  infer_result_file: /out/infer-result.json
+  mining_result_file: /out/result.tsv
+  models_dir: /out/models
+  monitor_file: /out/monitor.txt
+  root_dir: /out
+  tensorboard_dir: /out/tensorboard
+  training_result_file: /out/models/result.yaml
 ```
 
 ## dir and file structure
 ```
-/in/assets
-/in/annotations
-/in/train-index.tsv
-/in/val-index.tsv
-/in/candidate-index.tsv
-/in/config.yaml
-/in/env.yaml
-/out/models
-/out/tensorboard
-/out/monitor.txt
-/out/monitor-log.txt
-/out/ymir-executor-out.log
+/
+├── in
+│   ├── annotations
+│   ├── assets
+│   ├── config.yaml
+│   ├── env.yaml
+│   ├── train-index.tsv
+│   └── val-index.tsv
+├── out
+│   ├── models
+│   ├── monitor.txt
+│   ├── tensorboard
+│   └── ymir-executor-out.log
 ```
 
 """
 
 from enum import IntEnum, auto
 
-from pydantic import BaseModel
 import yaml
+from pydantic import BaseModel
 
 from ymir_exc import settings
 
