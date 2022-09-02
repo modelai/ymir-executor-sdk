@@ -14,7 +14,7 @@ setup(
     install_requires=requirements,
     author_email="wang.jiaxin@intellif.com",
     description="ymir executor SDK: SDK for develop ymir training, mining and infer docker images",
-    url="https://github.com/yzbx/ymir-executor-sdk.git",
+    url="https://github.com/modelai/ymir-executor-sdk.git",
     packages=find_packages(exclude=["*tests*"]),
     include_package_data=True,
 )

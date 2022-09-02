@@ -48,7 +48,6 @@ from enum import IntEnum, auto
 
 import yaml
 from pydantic import BaseModel
-
 from ymir_exc import settings
 
 
