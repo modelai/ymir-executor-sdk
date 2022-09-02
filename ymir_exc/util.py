@@ -48,7 +48,7 @@ class YmirStageWeight(object):
         else:
             self.weights = [0, 0, 0]
             self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.1))
-            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.9))
+            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.8))
             self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.1))
 
         assert sum(self.weights) == 1, f'sum of weights {weights} != 1'
