@@ -31,4 +31,9 @@ def item_paths(dataset_type: env.DatasetType) -> Iterator[Tuple[str, str]]:
 
 
 def items_count(dataset_type: env.DatasetType) -> int:
-    return len(list(item_paths(dataset_type=dataset_type)))
+    file_path = _index_file_for_dataset_type(env.get_current_env(), dataset_type)
+    if not file_path:
+        raise ValueError(f"index file not set for dataset: {dataset_type}")
+
+    with open(file_path, 'r') as f:
+        return len(f.readlines())

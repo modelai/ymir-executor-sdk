@@ -29,9 +29,13 @@ class Annotation(BaseModel):
 
 def multiple_model_stages_supportable() -> bool:
     ymir_version = os.getenv('YMIR_VERSION', '1.1.0')
-    if Version(ymir_version) >= Version('1.2.0'):
-        return True
-    else:
+    try:
+        if Version(ymir_version) >= Version('1.2.0'):
+            return True
+        else:
+            return False
+    except Exception as e:
+        warnings.warn(f'{e}, unknown YMIR_VERSION {ymir_version}, use 1.1.0 instead')
         return False
 
 
