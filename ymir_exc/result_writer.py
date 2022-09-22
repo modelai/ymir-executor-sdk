@@ -57,7 +57,7 @@ def write_model_stage(stage_name: str, files: List[str], mAP: float, timestamp: 
 
     if multiple_model_stages_supportable():
         model_stages = training_result.get('model_stages', {})
-
+        # stage_name --> intermediate
         model_stages[stage_name] = {
             'stage_name': stage_name,
             'files': files,

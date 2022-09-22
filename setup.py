@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-__version__ = '1.1.1.0902'
+__version__ = '1.3.0.0922'
 
 requirements = []
 with open('requirements.txt') as f:
