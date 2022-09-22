@@ -10,7 +10,6 @@ from typing import Dict, List, Tuple
 import imagesize
 import yaml
 from easydict import EasyDict as edict
-
 from ymir_exc import env
 from ymir_exc import result_writer as rw
 
@@ -108,7 +107,7 @@ def get_ymir_process(stage: YmirStage,
 
 def get_merged_config() -> edict:
     """return all config for ymir
-    view https://github.com/yzbx/ymir-executor-fork/wiki/input-(-in)-and-output-(-out)-for-docker-image for detail
+    view https://github.com/modelai/ymir-executor-fork/wiki/input-(-in)-and-output-(-out)-for-docker-image for detail
     merged_cfg.param: read from /in/config.yaml
     merged_cfg.ymir: read from /in/env.yaml
     """
@@ -253,6 +252,10 @@ def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: s
     if not files and map50 > 0:
         warnings.warn(f'map50 = {map50} > 0 when save all files')
 
+    # ymir not support absolute path
+    root_dir = cfg.ymir.output.models_dir
+    files = [osp.relpath(f, start=root_dir) for f in files]
+
     if rw.multiple_model_stages_supportable():
         _write_latest_ymir_training_result(cfg, float(map50), id, files)
     else:
@@ -265,7 +268,7 @@ def _write_latest_ymir_training_result(cfg: edict, map50: float, id: str, files:
     """
     # use `rw.write_training_result` to save training result
     if files:
-        rw.write_model_stage(stage_name=id, files=[osp.basename(f) for f in files], mAP=map50)
+        rw.write_model_stage(stage_name=id, files=files, mAP=map50)
     else:
         # save other files with best map50, use relative path, filter out directory.
         root_dir = cfg.ymir.output.models_dir

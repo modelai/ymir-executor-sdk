@@ -1,0 +1,21 @@
+config_file: 'configs/yolox/yolox_nano_8x8_300e_coco.py'
+samples_per_gpu: 2
+workers_per_gpu: 2
+batch_size: 16
+class_names:
+- bowl
+- cat
+- bottle
+- cup
+- spoon
+max_epochs: 10
+epochs: 10
+gpu_count: 1
+gpu_id: '0'
+img_size: 640
+model: yolov5n
+opset: 11
+pretrained_model_paths: []
+task_id: t0000001000002ebb7f11653630774
+args_options: '--exist-ok'
+save_period: 2

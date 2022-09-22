@@ -50,20 +50,23 @@ class Executor(object):
 
     def _run_training(self) -> None:
         command = self.apps['training']
-        logging.info(f'training: {command}')
+        logging.info(f'start training: {command}')
         subprocess.run(command.split(), check=True)
         monitor.write_monitor_logger(percent=1.0)
+        logging.info('training finished')
 
     def _run_mining(self, task_idx: int = 0, task_num: int = 1) -> None:
         command = self.apps['mining']
-        logging.info(f'mining: {command}')
+        logging.info(f'start mining: {command}')
         subprocess.run(command.split(), check=True)
         monitor.write_monitor_logger(
             percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1, task_idx=task_idx, task_num=task_num))
+        logging.info('mining finished')
 
     def _run_infer(self, task_idx: int = 0, task_num: int = 1) -> None:
         command = self.apps['infer']
-        logging.info(f'infer: {command}')
+        logging.info(f'start infer: {command}')
         subprocess.run(command.split(), check=True)
         monitor.write_monitor_logger(
             percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1, task_idx=task_idx, task_num=task_num))
+        logging.info('infer finished')
