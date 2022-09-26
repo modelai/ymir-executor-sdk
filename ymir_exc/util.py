@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 import imagesize
 import yaml
 from easydict import EasyDict as edict
+
 from ymir_exc import env
 from ymir_exc import result_writer as rw
 
@@ -257,6 +258,9 @@ def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: s
     files = [osp.relpath(f, start=root_dir) for f in files]
 
     if rw.multiple_model_stages_supportable():
+        if id.isnumeric():
+            warnings.warn(f'use stage{id} instead {id} for stage name')
+            id = f'stage_{id}'
         _write_latest_ymir_training_result(cfg, float(map50), id, files)
     else:
         _write_earliest_ymir_training_result(cfg, float(map50), id, files)
