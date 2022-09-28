@@ -41,17 +41,17 @@ class YmirStageWeight(object):
         weights: weight for each ymir stage
         if weights is None:
             self.weights = [0, 0, 0]
-            self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.0001))
-            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.9998))
-            self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.0001))
+            self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.00001))
+            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.99998))
+            self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.00001))
         """
         if weights:
             self.weights = weights
         else:
             self.weights = [0, 0, 0]
-            self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.0001))
-            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.9998))
-            self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.0001))
+            self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.00001))
+            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.99998))
+            self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.00001))
 
         assert sum(self.weights) == 1, f'sum of weights {weights} != 1'
         assert len(self.weights) == 3, f'len of weights {weights} != 3'
