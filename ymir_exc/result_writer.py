@@ -95,10 +95,9 @@ def write_model_stage(stage_name: str,
             logging.info(f"data_writer removed model stage: {del_stage_name}")
         training_result['model_stages'] = model_stages
 
-        # attachments, allow for dict update instead of replace.
+        # attachments, replace old value if valid
         if attachments:
-            exist_attachments = training_result.get('attachments', {})
-            training_result['attachments'] = exist_attachments.update(attachments)
+            training_result['attachments'] = attachments
     else:
         warnings.warn('mutiple model stages is not supported, use write_training_result() instead')
         _files = training_result.get('model', [])
