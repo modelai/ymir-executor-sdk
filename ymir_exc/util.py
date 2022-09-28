@@ -243,12 +243,18 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
         raise Exception(f'unknown bool type {key} = {v} ({type(v)})')
 
 
-def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: str) -> None:
+def write_ymir_training_result(cfg: edict,
+                               map50: float,
+                               files: List[str],
+                               id: str,
+                               attachments: Dict[str, List[str]] = None) -> None:
     """write training result to disk for ymir
     cfg: ymir merged config, view get_merged_config()
     map50: evaluation result
     files: weight and related files to save, [] means save all files in /out/models
     id: weight name to distinguish models from different epoch/step
+    attachments: attachment files, All files should under
+        directory: `/out/models`
     """
     if not files and map50 > 0:
         warnings.warn(f'map50 = {map50} > 0 when save all files')
@@ -261,12 +267,16 @@ def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: s
         if id.isnumeric():
             warnings.warn(f'use stage{id} instead {id} for stage name')
             id = f'stage_{id}'
-        _write_latest_ymir_training_result(cfg, float(map50), id, files)
+        _write_latest_ymir_training_result(cfg, float(map50), id, files, attachments)
     else:
         _write_earliest_ymir_training_result(cfg, float(map50), id, files)
 
 
-def _write_latest_ymir_training_result(cfg: edict, map50: float, id: str, files: List[str]) -> None:
+def _write_latest_ymir_training_result(cfg: edict,
+                                       map50: float,
+                                       id: str,
+                                       files: List[str],
+                                       attachments: Dict[str, List[str]] = None) -> None:
     """
     for ymir>=1.2.0
     """
@@ -287,7 +297,7 @@ def _write_latest_ymir_training_result(cfg: edict, map50: float, id: str, files:
                 training_result = yaml.safe_load(stream=f)
 
             map50 = max(training_result.get('map', 0.0), map50)
-        rw.write_model_stage(stage_name=id, files=files, mAP=map50)
+        rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
 
 
 def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, files: List[str]) -> None:
