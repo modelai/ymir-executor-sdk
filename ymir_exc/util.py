@@ -284,7 +284,7 @@ def _write_latest_ymir_training_result(cfg: edict,
     """
     # use `rw.write_training_result` to save training result
     if files:
-        rw.write_model_stage(stage_name=id, files=files, mAP=map50)
+        rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
     else:
         # save other files with best map50, use relative path, filter out directory.
         root_dir = cfg.ymir.output.models_dir
