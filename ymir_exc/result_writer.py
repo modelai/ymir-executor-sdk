@@ -28,15 +28,22 @@ class Annotation(BaseModel):
 
 
 def multiple_model_stages_supportable() -> bool:
-    ymir_version = os.getenv('YMIR_VERSION', '1.1.0')
-    try:
-        if Version(ymir_version) >= Version('1.2.0'):
-            return True
-        else:
+    """
+    for ymir>=1.3.0, add new keywords for protocol_version>=1.0.0
+    """
+    protocol_version = env.get_current_env().protocol_version
+    if Version(protocol_version) >= Version('1.0.0'):
+        return True
+    else:
+        ymir_version = os.getenv('YMIR_VERSION', '1.1.0')
+        try:
+            if Version(ymir_version) >= Version('1.2.0'):
+                return True
+            else:
+                return False
+        except Exception as e:
+            warnings.warn(f'{e}, unknown YMIR_VERSION {ymir_version}, use 1.1.0 instead')
             return False
-    except Exception as e:
-        warnings.warn(f'{e}, unknown YMIR_VERSION {ymir_version}, use 1.1.0 instead')
-        return False
 
 
 def write_model_stage(stage_name: str,

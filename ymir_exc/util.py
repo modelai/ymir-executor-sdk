@@ -1,5 +1,6 @@
 import glob
 import json
+import math
 import os
 import os.path as osp
 import socket
@@ -53,7 +54,7 @@ class YmirStageWeight(object):
             self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.99998))
             self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.00001))
 
-        assert sum(self.weights) == 1, f'sum of weights {weights} != 1'
+        assert math.isclose(sum(self.weights), 1), f'sum of weights {weights} != 1'
         assert len(self.weights) == 3, f'len of weights {weights} != 3'
 
     def get_stage_process(self, stage: YmirStage, p: float) -> float:

@@ -1,3 +1,4 @@
+import math
 import os
 import random
 
@@ -11,13 +12,13 @@ from ymir_exc.util import YmirStage, YmirStageWeight, get_bool, get_ymir_process
 def test_get_ymir_process():
     weights = YmirStageWeight()
     w0, w1, _ = weights.weights
-    assert sum(weights.weights) == 1
+    assert math.isclose(sum(weights.weights), 1)
     for stage, stage_init, stage_weight in zip([YmirStage.PREPROCESS, YmirStage.TASK, YmirStage.POSTPROCESS],
                                                [0, w0, w0 + w1], weights.weights):
         for _ in range(5):
             p = random.random()
             x = get_ymir_process(stage, p=p)
-            assert x == stage_init + p * stage_weight
+            assert math.isclose(x, stage_init + p * stage_weight)
             assert 0 <= x <= 1
 
     for stage, stage_init, stage_weight in zip([YmirStage.PREPROCESS, YmirStage.TASK, YmirStage.POSTPROCESS],
@@ -25,11 +26,11 @@ def test_get_ymir_process():
         for _ in range(5):
             p = random.random()
             x = get_ymir_process(stage, p=p, task_idx=0, task_num=2)
-            assert x == 0.5 * (stage_init + p * stage_weight)
+            assert math.isclose(x, 0.5 * (stage_init + p * stage_weight))
             assert 0 <= x <= 0.5
 
             x = get_ymir_process(stage, p=p, task_idx=1, task_num=2)
-            assert x == 0.5 + 0.5 * (stage_init + p * stage_weight)
+            assert math.isclose(x, 0.5 + 0.5 * (stage_init + p * stage_weight))
             assert 0.5 <= x <= 1
 
 
