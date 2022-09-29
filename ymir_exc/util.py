@@ -254,7 +254,7 @@ def write_ymir_training_result(cfg: edict, map50: float, files: List[str], id: s
 
     # ymir not support absolute path
     root_dir = cfg.ymir.output.models_dir
-    files = [osp.relpath(f, start=root_dir) for f in files]
+    files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
 
     if rw.multiple_model_stages_supportable():
         _write_latest_ymir_training_result(cfg, float(map50), id, files)
