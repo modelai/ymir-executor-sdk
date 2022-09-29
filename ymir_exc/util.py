@@ -11,7 +11,6 @@ from typing import Dict, List, Tuple
 import imagesize
 import yaml
 from easydict import EasyDict as edict
-
 from ymir_exc import env
 from ymir_exc import result_writer as rw
 
@@ -263,7 +262,7 @@ def write_ymir_training_result(cfg: edict,
 
     # ymir not support absolute path
     root_dir = cfg.ymir.output.models_dir
-    files = [osp.relpath(f, start=root_dir) for f in files]
+    files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
 
     if rw.multiple_model_stages_supportable():
         if id.isnumeric():
