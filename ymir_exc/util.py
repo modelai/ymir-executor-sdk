@@ -11,6 +11,7 @@ from typing import Dict, List, Tuple
 import imagesize
 import yaml
 from easydict import EasyDict as edict
+
 from ymir_exc import env
 from ymir_exc import result_writer as rw
 
@@ -110,9 +111,26 @@ def get_ymir_process(stage: YmirStage,
 def get_merged_config() -> edict:
     """return all config for ymir
     view https://github.com/modelai/ymir-executor-fork/wiki/input-(-in)-and-output-(-out)-for-docker-image for detail
-    merged_cfg.param: read from /in/config.yaml
+    merged_cfg.param: read from /in/config.yaml and code_config, code_config will be overwritten by /in/config.yaml.
     merged_cfg.ymir: read from /in/env.yaml
     """
+
+    def get_code_config(code_config_file: str) -> dict:
+        if code_config_file:
+            with open(code_config_file, 'r') as f:
+                return yaml.safe_load(f)
+        else:
+            return dict()
+
+    exe_cfg = env.get_executor_config()
+    code_config_file = exe_cfg.get('code_config', '')
+    code_cfg = get_code_config(code_config_file)
+    code_cfg.update(exe_cfg)
+
+    merged_cfg = edict()
+    # the hyperparameter information
+    merged_cfg.param = code_cfg
+
     merged_cfg = edict()
     # the hyperparameter information
     merged_cfg.param = env.get_executor_config()
