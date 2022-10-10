@@ -122,20 +122,22 @@ def get_merged_config() -> edict:
         else:
             return dict()
 
+    merged_cfg = edict()
+
+    # the hyperparameter information
     exe_cfg = env.get_executor_config()
-    code_config_file = exe_cfg.get('code_config', '')
-    code_cfg = get_code_config(code_config_file)
-    code_cfg.update(exe_cfg)
+    if exe_cfg.get('git_url', ''):
+        # live code mode
+        code_config_file = exe_cfg.get('code_config', '')
+        code_cfg = get_code_config(code_config_file)
+        code_cfg.update(exe_cfg)
 
-    merged_cfg = edict()
-    # the hyperparameter information
-    merged_cfg.param = code_cfg
+        merged_cfg.param = code_cfg
+    else:
+        # normal mode
+        merged_cfg.param = exe_cfg
 
-    merged_cfg = edict()
-    # the hyperparameter information
-    merged_cfg.param = env.get_executor_config()
-
-    # the ymir path information
+    # the ymir path/env information
     merged_cfg.ymir = env.get_current_env()
     return merged_cfg
 
