@@ -277,9 +277,6 @@ def write_ymir_training_result(cfg: edict,
     attachments: attachment files, All files should under
         directory: `/out/models`
     """
-    if not files and map50 > 0:
-        warnings.warn(f'map50 = {map50} > 0 when save all files')
-
     # ymir not support absolute path
     root_dir = cfg.ymir.output.models_dir
     files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
@@ -316,8 +313,10 @@ def _write_latest_ymir_training_result(cfg: edict,
             with open(training_result_file, 'r') as f:
                 training_result = yaml.safe_load(stream=f)
 
-            map50 = max(training_result.get('map', 0.0), map50)
-        rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
+            max_map50 = max(training_result.get('map', 0.0), map50)
+            if 0 < map50 < max_map50:
+                warnings.warn(f'map50 = {map50} < max_map50 = {max_map50} when save all files, ignore map50')
+        rw.write_model_stage(stage_name=id, files=files, mAP=max_map50, attachments=attachments)
 
 
 def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, files: List[str]) -> None:
@@ -340,6 +339,8 @@ def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, file
         max_map50 = max(training_result.get('map', 0), map50)
         training_result['map'] = max_map50
 
+        if 0 < map50 < max_map50:
+            warnings.warn(f'map50 = {map50} < max_map50 = {max_map50} when save all files, ignore map50')
         # when save other files like onnx model, we cannot obtain map50, set map50=0 to use the max_map50
         training_result[id] = map50 if map50 > 0 else max_map50
     else:
