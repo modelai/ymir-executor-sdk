@@ -2,14 +2,10 @@
 
 ## python 3.7+
 ```
-# ymir1.2.0+
+# ymir1.0.0/1.1.0/1.2.0/1.3.0+
+pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.3.0"
 
-pip install "git+https://github.com/IndustryEssentials/ymir.git/@dev#egg=ymir-exc&subdirectory=docker_executor/sample_executor/ymir_exc"
-
-pip install "git+https://github.com/modelai/ymir-executor-sdk.git"
-
-
-# ymir 1.0.0/1.1.0
+# ymir 1.0.0/1.1.0/1.2.0
 
 pip install "git+https://github.com/modelai/ymir-executor-sdk.git@ymir1.0.0"
 ```

@@ -3,17 +3,20 @@ import json
 import math
 import os
 import os.path as osp
+import re
 import socket
 import warnings
 from enum import IntEnum
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import imagesize
 import yaml
+from deprecated.sphinx import deprecated, versionadded, versionchanged
 from easydict import EasyDict as edict
 
 from ymir_exc import env
 from ymir_exc import result_writer as rw
+from ymir_exc.monitor import write_monitor_logger_for_multiple_tasks
 
 
 def find_free_port():
@@ -76,6 +79,8 @@ class YmirStageWeight(object):
             raise NotImplementedError(f'unknown stage {stage}')
 
 
+@deprecated(version='1.3.1',
+            reason="This method is deprecated, recommand use all-in-on function write_ymir_monitor_process() instead")
 def get_ymir_process(stage: YmirStage,
                      p: float,
                      task_idx: int = 0,
@@ -83,7 +88,7 @@ def get_ymir_process(stage: YmirStage,
                      weights: YmirStageWeight = None) -> float:
     """return the process for ymir, range in [0,1]
     stage: pre-process/task/post-process
-    p: percent for stage, range in [0,1]
+    p: naive percent for stage, range in [0,1]
     task_idx: index for multiple tasks like mining (task_idx=0) and infer (task_idx=1)
     task_num: the total number of multiple tasks.
 
@@ -264,6 +269,49 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
         raise Exception(f'unknown bool type {key} = {v} ({type(v)})')
 
 
+@versionadded(version='1.3.1', reason="support user custom by hyper-parameter: ymir_saved_file_patterns")
+def filter_saved_files(cfg: edict, files: List[str]):
+    """
+    if files == []:
+        if ymir_saved_file_patterns:
+            return "filterd files in cfg.ymir.output.models_dir"
+        else:
+            return "all file in cfg.ymir.output.models_dir"
+    else:
+        if ymir_saved_file_patterns:
+            return "filterd files"
+        else:
+            return files
+    """
+    ymir_saved_file_patterns: List[str] = cfg.param.get('ymir_saved_file_patterns', '').split(',')
+
+    root_dir = cfg.ymir.output.models_dir
+    if not files:
+        root_dir = cfg.ymir.output.models_dir
+        files = [osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir, '*')) if osp.isfile(f)]
+
+    if ymir_saved_file_patterns:
+        custom_saved_files = []
+
+        for f in files:
+            for pattern in ymir_saved_file_patterns:
+                try:
+                    if re.match(pattern=pattern.strip(), string=f) is not None:
+                        custom_saved_files.append(f)
+                        break
+                except Exception as e:
+                    warnings.warn(f'bad python regular expression pattern {pattern} with {e}')
+                    ymir_saved_file_patterns.remove(pattern)
+                    break
+
+        return custom_saved_files
+    else:
+        # ymir not support absolute path
+        files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
+        return files
+
+
+@versionchanged(version='1.3.1', reason="support user custom by hyper-parameter: ymir_saved_file_patterns")
 def write_ymir_training_result(cfg: edict,
                                map50: float,
                                files: List[str],
@@ -277,17 +325,16 @@ def write_ymir_training_result(cfg: edict,
     attachments: attachment files, All files should under
         directory: `/out/models`
     """
-    # ymir not support absolute path
-    root_dir = cfg.ymir.output.models_dir
-    files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
+    files = filter_saved_files(cfg, files)
 
-    if rw.multiple_model_stages_supportable():
-        if id.isnumeric():
-            warnings.warn(f'use stage{id} instead {id} for stage name')
-            id = f'stage_{id}'
-        _write_latest_ymir_training_result(cfg, float(map50), id, files, attachments)
-    else:
-        _write_earliest_ymir_training_result(cfg, float(map50), id, files)
+    if files:
+        if rw.multiple_model_stages_supportable():
+            if id.isnumeric():
+                warnings.warn(f'use stage_{id} instead {id} for stage name')
+                id = f'stage_{id}'
+            _write_latest_ymir_training_result(cfg, float(map50), id, files, attachments)
+        else:
+            _write_earliest_ymir_training_result(cfg, float(map50), id, files)
 
 
 def _write_latest_ymir_training_result(cfg: edict,
@@ -298,25 +345,7 @@ def _write_latest_ymir_training_result(cfg: edict,
     """
     for ymir>=1.2.0
     """
-    # use `rw.write_training_result` to save training result
-    if files:
-        rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
-    else:
-        # save other files with best map50, use relative path, filter out directory.
-        root_dir = cfg.ymir.output.models_dir
-        files = [
-            osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir, '*'), recursive=False) if osp.isfile(f)
-        ]
-
-        training_result_file = cfg.ymir.output.training_result_file
-        if osp.exists(training_result_file):
-            with open(training_result_file, 'r') as f:
-                training_result = yaml.safe_load(stream=f)
-
-            max_map50 = max(training_result.get('map', 0.0), map50)
-            if 0 < map50 < max_map50:
-                warnings.warn(f'map50 = {map50} < max_map50 = {max_map50} when save all files, ignore map50')
-        rw.write_model_stage(stage_name=id, files=files, mAP=max_map50, attachments=attachments)
+    rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
 
 
 def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, files: List[str]) -> None:
@@ -324,10 +353,6 @@ def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, file
     for 1.0.0 <= ymir <=1.1.0
     """
 
-    if not files:
-        # save other files with best map50, use relative path, filter out directory.
-        root_dir = cfg.ymir.output.models_dir
-        files = [osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir, '*')) if osp.isfile(f)]
     training_result_file = cfg.ymir.output.training_result_file
     if osp.exists(training_result_file):
         with open(training_result_file, 'r') as f:
@@ -348,3 +373,27 @@ def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, file
 
     with open(training_result_file, 'w') as f:
         yaml.safe_dump(training_result, f)
+
+
+def write_ymir_monitor_process(cfg: edict,
+                               task: str,
+                               naive_stage_percent: float,
+                               stage: YmirStage,
+                               stage_weights: Union[YmirStageWeight, List[float]] = None,
+                               task_order: str = 'tmi') -> None:
+    """all in one process monitor function
+    task: training, infer or mining
+    stage: pre-process, task or post-process
+    naive_stage_percent: [0, 1] percent for a specific stage
+    weights: weights for each stage
+    """
+
+    if stage_weights is None or isinstance(stage_weights, List):
+        stage_weights = YmirStageWeight(weights=stage_weights)
+
+    if naive_stage_percent < 0 or naive_stage_percent > 1.0:
+        raise Exception(f'p not in [0,1], naive stage percent={naive_stage_percent}')
+
+    naive_task_percent = stage_weights.get_stage_process(stage, naive_stage_percent)
+
+    write_monitor_logger_for_multiple_tasks(cfg, task, naive_task_percent, task_order)

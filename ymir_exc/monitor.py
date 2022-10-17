@@ -1,5 +1,6 @@
 import time
 
+from easydict import EasyDict as edict
 from tensorboardX import SummaryWriter
 
 from ymir_exc import env
@@ -11,6 +12,28 @@ def write_monitor_logger(percent: float) -> None:
     env_config = env.get_current_env()
     with open(env_config.output.monitor_file, 'w') as f:
         f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{TASK_STATE_RUNNING}\n")
+
+
+def write_monitor_logger_for_multiple_tasks(cfg: edict, task: str, percent: float, order='tmi') -> None:
+    """write monitor for multiple class
+    current support follow case:
+    1. training
+    2. mining
+    3. infer
+    4. mining and infer
+       * percent in [0, 1], will map to [0, 0,5] or [0,5, 1] according to order and task.
+    """
+    assert task in ['training', 'mining', 'infer'], f'unsupported task {task}'
+    assert 0 <= percent <= 1, f'percent {percent} not in [0, 1]'
+    assert order in ['tmi', 'tim'], f'unsupported order {order}'
+
+    if cfg.ymir.run_infer and cfg.ymir.run_mining:
+        if (order == 'tmi' and task == 'mining') or (order == 'tim' and task == 'infer'):
+            write_monitor_logger(percent=0.5 * percent)
+        else:
+            write_monitor_logger(percent=0.5 + 0.5 * percent)
+    else:
+        write_monitor_logger(percent=percent)
 
 
 def write_tensorboard_text(text: str, tag: str = None) -> None:
