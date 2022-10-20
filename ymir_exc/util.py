@@ -283,31 +283,33 @@ def filter_saved_files(cfg: edict, files: List[str]):
         else:
             return files
     """
-    ymir_saved_file_patterns: List[str] = cfg.param.get('ymir_saved_file_patterns', '').split(',')
+    ymir_saved_file_patterns: str = cfg.param.get('ymir_saved_file_patterns', '')
 
     root_dir = cfg.ymir.output.models_dir
     if not files:
         root_dir = cfg.ymir.output.models_dir
         files = [osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir, '*')) if osp.isfile(f)]
+    else:
+        files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
 
     if ymir_saved_file_patterns:
+        patterns: List[str] = ymir_saved_file_patterns.split(',')
         custom_saved_files = []
 
         for f in files:
-            for pattern in ymir_saved_file_patterns:
+            for pattern in patterns:
                 try:
                     if re.match(pattern=pattern.strip(), string=f) is not None:
                         custom_saved_files.append(f)
                         break
                 except Exception as e:
                     warnings.warn(f'bad python regular expression pattern {pattern} with {e}')
-                    ymir_saved_file_patterns.remove(pattern)
+                    patterns.remove(pattern)
                     break
 
         return custom_saved_files
     else:
         # ymir not support absolute path
-        files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
         return files
 
 
