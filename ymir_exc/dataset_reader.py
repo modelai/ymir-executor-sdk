@@ -1,4 +1,6 @@
-from typing import Iterator, Tuple
+from typing import Iterator, List, Tuple
+
+from PIL import Image
 
 from ymir_exc import env
 
@@ -37,3 +39,20 @@ def items_count(dataset_type: env.DatasetType) -> int:
 
     with open(file_path, 'r') as f:
         return len(f.readlines())
+
+
+def filter_broken_images(image_files: List[str]) -> List[str]:
+    """
+    filter out the broken image files
+    return readable image
+    """
+    normal_image_files = []
+    for img_f in image_files:
+        try:
+            img = Image.open(img_f)
+            img.verify()
+            normal_image_files.append(img_f)
+        except Exception as e:
+            print(f'bad img file {img_f}: {e}')
+
+    return normal_image_files

@@ -3,6 +3,7 @@
 ## contents of env.yaml
 ```
 task_id: t000000100000166d7761660213748
+protocol_version: 1.0.0
 run_training: true
 run_mining: false
 run_infer: false
@@ -48,6 +49,7 @@ from enum import IntEnum, auto
 
 import yaml
 from pydantic import BaseModel
+
 from ymir_exc import settings
 
 
@@ -82,6 +84,7 @@ class EnvOutputConfig(BaseModel):
 
 class EnvConfig(BaseModel):
     task_id: str = 'default-task'
+    protocol_version: str = '0.0.1'  # input/output api version
     run_training: bool = False
     run_mining: bool = False
     run_infer: bool = False
