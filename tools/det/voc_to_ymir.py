@@ -1,9 +1,15 @@
 """
 you can import voc dataset to ymir directly
-this script help you to import train/val alone to ymir
+this script help you to import part of dataset to ymir accordint to voc index file
+
+eg1: extract voc 2012 dog train dataset:
+python3 voc_to_ymir.py --root_dir xxx/VOCdevkit --index_file VOC2012/ImageSets/Main/dog_train.txt --out_dir xxx
+
+eg2: extract voc 2007 cat val dataset:
+python3 voc_to_ymir.py --root_dir xxx/VOCdevkit --index_file VOC2007/ImageSets/Main/cat_val.txt --out_dir xxx
 
 suppose we have voc dataset as follow:
-VOCdevkit
+VOCdevkit  # root_dir
 ├── VOC2007
 │   ├── Annotations
 │   ├── ImageSets
@@ -23,6 +29,13 @@ VOCdevkit
     ├── JPEGImages
     ├── SegmentationClass
     └── SegmentationObject
+
+output ymir dataset as follow:
+voc_cat
+└── VOC2007
+    └── cat_val
+        ├── gt
+        └── images
 """
 import argparse
 import os

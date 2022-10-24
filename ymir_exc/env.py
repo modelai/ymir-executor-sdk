@@ -26,7 +26,7 @@ output:
   training_result_file: /out/models/result.yaml
 ```
 
-## dir and file structure
+## dir and file structure for training task
 ```
 /
 ├── in
