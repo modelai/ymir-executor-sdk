@@ -64,6 +64,8 @@ def write_model_stage(stage_name: str,
     """
     if not stage_name or not files:
         raise ValueError('empty stage_name or files')
+
+    stage_name = stage_name.replace('-', '_')
     if not stage_name.isidentifier():
         raise ValueError(
             f"invalid stage_name: {stage_name}, need alphabets, numbers and underlines, start with alphabets")
