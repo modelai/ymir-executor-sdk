@@ -1,5 +1,7 @@
 # write function
 
+update 2022/10/27
+
 ## monitor process
 
 write a float `percent` to `cfg.ymir.output.monitor_file` (/out/monitor.txt)

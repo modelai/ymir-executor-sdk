@@ -65,9 +65,11 @@ def convert_json_to_label(json_file) -> str:
     """
     from https://github.com/open-mmlab/mmsegmentation/blob/master/tools/convert_datasets/cityscapes.py
     """
-    label_file = json_file.replace('_polygons.json', '_labelTrainIds.png')
+    # label_file = json_file.replace('_polygons.json', '_labelTrainIds.png')
+    label_file = json_file.replace('_polygons.json', '_color.png')
     if not osp.exists(label_file):
-        json2labelImg(json_file, label_file, 'trainIds')
+        # json2labelImg(json_file, label_file, 'trainIds')
+        json2labelImg(json_file, label_file, 'colors')
 
     return label_file
 

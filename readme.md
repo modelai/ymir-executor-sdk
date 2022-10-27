@@ -1,5 +1,11 @@
 # ymir-exc
 
+## documence
+
+- [read](docs/read.md)
+
+- [write](docs/write.md)
+
 ## python 3.7+
 ```
 # ymir1.0.0/1.1.0/1.2.0/1.3.0+
