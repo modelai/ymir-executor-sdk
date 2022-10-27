@@ -16,7 +16,7 @@ from easydict import EasyDict as edict
 
 from ymir_exc import env
 from ymir_exc import result_writer as rw
-from ymir_exc.monitor import write_monitor_logger_for_multiple_tasks
+from ymir_exc.monitor import write_monitor_logger_for_multiple_tasks, YmirTask
 
 
 def find_free_port():
@@ -60,7 +60,7 @@ class YmirStageWeight(object):
         assert math.isclose(sum(self.weights), 1), f'sum of weights {weights} != 1'
         assert len(self.weights) == 3, f'len of weights {weights} != 3'
 
-    def get_stage_process(self, stage: YmirStage, p: float) -> float:
+    def get_stage_process(self, stage: Union[YmirStage, str], p: float) -> float:
         """return the stage process for a task, range in [0, 1]
         for preprocess stage:
             return process range in [0, self.weight[0]]
@@ -69,11 +69,11 @@ class YmirStageWeight(object):
         for postprocess stage:
             return process range in [self.weight[0]+self.weight[1], 1]
         """
-        if stage == YmirStage.PREPROCESS:
+        if stage in [YmirStage.PREPROCESS, 'preprocess']:
             return self.weights[0] * p
-        elif stage == YmirStage.TASK:
+        elif stage in [YmirStage.TASK, 'task']:
             return self.weights[0] + self.weights[1] * p
-        elif stage == YmirStage.POSTPROCESS:
+        elif stage == [YmirStage.POSTPROCESS, 'postprocess']:
             return self.weights[0] + self.weights[1] + self.weights[2] * p
         else:
             raise NotImplementedError(f'unknown stage {stage}')
@@ -81,7 +81,7 @@ class YmirStageWeight(object):
 
 @deprecated(version='1.3.1',
             reason="This method is deprecated, recommand use all-in-on function write_ymir_monitor_process() instead")
-def get_ymir_process(stage: YmirStage,
+def get_ymir_process(stage: Union[YmirStage, str],
                      p: float,
                      task_idx: int = 0,
                      task_num: int = 1,
@@ -282,6 +282,8 @@ def filter_saved_files(cfg: edict, files: List[str]):
             return "filterd files"
         else:
             return files
+
+    return filtered relpath
     """
     ymir_saved_file_patterns: str = cfg.param.get('ymir_saved_file_patterns', '')
 
@@ -305,7 +307,6 @@ def filter_saved_files(cfg: edict, files: List[str]):
                 except Exception as e:
                     warnings.warn(f'bad python regular expression pattern {pattern} with {e}')
                     patterns.remove(pattern)
-                    break
 
         return custom_saved_files
     else:
@@ -378,9 +379,9 @@ def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, file
 
 
 def write_ymir_monitor_process(cfg: edict,
-                               task: str,
+                               task: Union[YmirTask, str],
                                naive_stage_percent: float,
-                               stage: YmirStage,
+                               stage: Union[YmirStage, str],
                                stage_weights: Union[YmirStageWeight, List[float]] = None,
                                task_order: str = 'tmi') -> None:
     """all in one process monitor function
@@ -397,5 +398,4 @@ def write_ymir_monitor_process(cfg: edict,
         raise Exception(f'p not in [0,1], naive stage percent={naive_stage_percent}')
 
     naive_task_percent = stage_weights.get_stage_process(stage, naive_stage_percent)
-
     write_monitor_logger_for_multiple_tasks(cfg, task, naive_task_percent, task_order)
