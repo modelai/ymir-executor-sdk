@@ -73,7 +73,7 @@ class YmirStageWeight(object):
             return self.weights[0] * p
         elif stage in [YmirStage.TASK, 'task']:
             return self.weights[0] + self.weights[1] * p
-        elif stage == [YmirStage.POSTPROCESS, 'postprocess']:
+        elif stage in [YmirStage.POSTPROCESS, 'postprocess']:
             return self.weights[0] + self.weights[1] + self.weights[2] * p
         else:
             raise NotImplementedError(f'unknown stage {stage}')
