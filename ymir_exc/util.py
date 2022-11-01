@@ -301,7 +301,7 @@ def filter_saved_files(cfg: edict, files: List[str]):
         for f in files:
             for pattern in patterns:
                 try:
-                    if re.match(pattern=pattern.strip(), string=f) is not None:
+                    if re.search(pattern=pattern.strip(), string=f) is not None:
                         custom_saved_files.append(f)
                         break
                 except Exception as e:
