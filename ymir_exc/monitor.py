@@ -41,7 +41,7 @@ def write_monitor_logger_for_multiple_tasks(cfg: edict,
 
     if cfg.ymir.run_infer and cfg.ymir.run_mining:
         if (order == 'tmi' and task in ['mining', YmirTask.MINING]) or (order == 'tim'
-                                                                        and task in ['infer', YmirTask.INFER]):
+                                                                        and task in ['infer', YmirTask.INFER]):  # noqa
             write_monitor_logger(percent=0.5 * percent)
         else:
             write_monitor_logger(percent=0.5 + 0.5 * percent)

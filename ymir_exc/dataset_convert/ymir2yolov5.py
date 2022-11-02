@@ -1,7 +1,6 @@
 from easydict import EasyDict as edict
 import os
 import os.path as osp
-import shutil
 import yaml
 from pathlib import Path
 from tqdm import tqdm
