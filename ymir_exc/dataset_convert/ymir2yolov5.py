@@ -97,7 +97,7 @@ def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None) -> str:
     """
 
     out_dir = out_dir or cfg.ymir.output.root_dir
-    Path(cfg.ymir.input.assets_dir).symlink_to(osp.join(out_dir, 'images'))
+    Path(osp.join(out_dir, 'images')).symlink_to(cfg.ymir.input.assets_dir)
     data = dict(path=out_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names)
     for split, prefix in zip(['train', 'val', 'test'], ['training', 'val', 'candidate']):
         src_file = getattr(cfg.ymir.input, f'{prefix}_index_file')
@@ -115,7 +115,7 @@ def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None) -> str:
             with open(split_txt, 'w') as fw:
                 fw.write('\n'.join(img_files))
 
-        data[split] = f'{split}.tsv'
+        data[split] = f'{split}-index.txt'
 
     data_yaml = osp.join(out_dir, 'data.yaml')
     with open(data_yaml, 'w') as fw:
