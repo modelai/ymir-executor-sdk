@@ -1,11 +1,18 @@
 import time
-
+from enum import IntEnum
 from easydict import EasyDict as edict
+from typing import Union
 from tensorboardX import SummaryWriter
 
 from ymir_exc import env
 
 TASK_STATE_RUNNING = 2
+
+
+class YmirTask(IntEnum):
+    TRAINING = 1
+    MINING = 2
+    INFER = 3
 
 
 def write_monitor_logger(percent: float) -> None:
@@ -14,7 +21,10 @@ def write_monitor_logger(percent: float) -> None:
         f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{TASK_STATE_RUNNING}\n")
 
 
-def write_monitor_logger_for_multiple_tasks(cfg: edict, task: str, percent: float, order='tmi') -> None:
+def write_monitor_logger_for_multiple_tasks(cfg: edict,
+                                            task: Union[YmirTask, str],
+                                            percent: float,
+                                            order='tmi') -> None:
     """write monitor for multiple class
     current support follow case:
     1. training
@@ -23,12 +33,15 @@ def write_monitor_logger_for_multiple_tasks(cfg: edict, task: str, percent: floa
     4. mining and infer
        * percent in [0, 1], will map to [0, 0,5] or [0,5, 1] according to order and task.
     """
-    assert task in ['training', 'mining', 'infer'], f'unsupported task {task}'
+    if isinstance(task, str):
+        assert task in ['training', 'mining', 'infer'], f'unsupported task {task}'
+
     assert 0 <= percent <= 1, f'percent {percent} not in [0, 1]'
     assert order in ['tmi', 'tim'], f'unsupported order {order}'
 
     if cfg.ymir.run_infer and cfg.ymir.run_mining:
-        if (order == 'tmi' and task == 'mining') or (order == 'tim' and task == 'infer'):
+        if (order == 'tmi' and task in ['mining', YmirTask.MINING]) or (order == 'tim'
+                                                                        and task in ['infer', YmirTask.INFER]):  # noqa
             write_monitor_logger(percent=0.5 * percent)
         else:
             write_monitor_logger(percent=0.5 + 0.5 * percent)

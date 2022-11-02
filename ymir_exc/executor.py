@@ -1,9 +1,10 @@
 import logging
 import subprocess
 import sys
+from easydict import EasyDict as edict
 
 from ymir_exc import monitor
-from ymir_exc.util import YmirStage, get_bool, get_merged_config, get_ymir_process
+from ymir_exc.util import YmirStage, get_bool, get_merged_config, write_ymir_monitor_process
 
 
 class Executor(object):
@@ -27,19 +28,11 @@ class Executor(object):
             self._run_training()
         elif cfg.ymir.run_mining or cfg.ymir.run_infer:
             # for multiple tasks, run mining first, infer later.
-            if cfg.ymir.run_mining and cfg.ymir.run_infer:
-                task_num = 2
-                mining_task_idx = 0
-                infer_task_idx = 1
-            else:
-                task_num = 1
-                mining_task_idx = 0
-                infer_task_idx = 0
 
             if cfg.ymir.run_mining:
-                self._run_mining(task_idx=mining_task_idx, task_num=task_num)
+                self._run_mining(cfg)
             if cfg.ymir.run_infer:
-                self._run_infer(task_idx=infer_task_idx, task_num=task_num)
+                self._run_infer(cfg)
         else:
             logging.warning('no task running')
 
@@ -55,18 +48,16 @@ class Executor(object):
         monitor.write_monitor_logger(percent=1.0)
         logging.info('training finished')
 
-    def _run_mining(self, task_idx: int = 0, task_num: int = 1) -> None:
+    def _run_mining(self, cfg: edict) -> None:
         command = self.apps['mining']
         logging.info(f'start mining: {command}')
         subprocess.run(command.split(), check=True)
-        monitor.write_monitor_logger(
-            percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1, task_idx=task_idx, task_num=task_num))
+        write_ymir_monitor_process(cfg, task='mining', naive_stage_percent=1, stage=YmirStage.POSTPROCESS)
         logging.info('mining finished')
 
-    def _run_infer(self, task_idx: int = 0, task_num: int = 1) -> None:
+    def _run_infer(self, cfg: edict) -> None:
         command = self.apps['infer']
         logging.info(f'start infer: {command}')
         subprocess.run(command.split(), check=True)
-        monitor.write_monitor_logger(
-            percent=get_ymir_process(stage=YmirStage.POSTPROCESS, p=1, task_idx=task_idx, task_num=task_num))
+        write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=1, stage=YmirStage.POSTPROCESS)
         logging.info('infer finished')

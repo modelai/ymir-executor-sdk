@@ -64,6 +64,8 @@ def write_model_stage(stage_name: str,
     """
     if not stage_name or not files:
         raise ValueError('empty stage_name or files')
+
+    stage_name = stage_name.replace('-', '_')
     if not stage_name.isidentifier():
         raise ValueError(
             f"invalid stage_name: {stage_name}, need alphabets, numbers and underlines, start with alphabets")
@@ -145,10 +147,18 @@ def write_mining_result(mining_result: List[Tuple[str, float]]) -> None:
 
 
 def write_infer_result(infer_result: Dict[str, List[Annotation]]) -> None:
+    env_config = env.get_current_env()
+    protocol_version = env_config.protocol_version
+    # from ymir1.3.0, keyword change from annotations to boxes
+    if Version(protocol_version) >= Version('1.0.0'):
+        keyword = 'boxes'
+    else:
+        keyword = 'annotations'
+
     detection_result = {}
     for asset_path, annotations in infer_result.items():
         asset_basename = os.path.basename(asset_path)
-        detection_result[asset_basename] = {'annotations': [annotation.dict() for annotation in annotations]}
+        detection_result[asset_basename] = {keyword: [annotation.dict() for annotation in annotations]}
 
     result = {'detection': detection_result}
     env_config = env.get_current_env()
