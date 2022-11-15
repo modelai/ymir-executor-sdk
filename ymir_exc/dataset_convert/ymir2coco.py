@@ -1,9 +1,11 @@
+import json
 import os
 import os.path as osp
-from ymir_exc.util import get_merged_config
 from typing import Dict, List
+
 import imagesize
-import json
+
+from ymir_exc.util import get_merged_config
 
 
 def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, str]]:

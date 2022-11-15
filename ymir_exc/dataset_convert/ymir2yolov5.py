@@ -1,12 +1,13 @@
-from easydict import EasyDict as edict
 import os
 import os.path as osp
-import yaml
 from pathlib import Path
-from tqdm import tqdm
-from typing import Tuple, List
+from typing import List, Tuple
+
 import imagesize
+import yaml
+from easydict import EasyDict as edict
 from packaging.version import Version
+from tqdm import tqdm
 
 
 def img2label_paths(img_paths):
@@ -96,7 +97,8 @@ def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None) -> str:
     """
 
     out_dir = out_dir or cfg.ymir.output.root_dir
-    Path(osp.join(out_dir, 'images')).symlink_to(cfg.ymir.input.assets_dir)
+    if cfg.ymir.run_training:
+        Path(osp.join(out_dir, 'images')).symlink_to(cfg.ymir.input.assets_dir)
     data = dict(path=out_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names)
     for split, prefix in zip(['train', 'val', 'test'], ['training', 'val', 'candidate']):
         src_file = getattr(cfg.ymir.input, f'{prefix}_index_file')

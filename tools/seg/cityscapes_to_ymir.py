@@ -50,15 +50,16 @@ root_dir/train/images/munster_000001_000019_leftImg8bit.png
 root_dir/train/gt/SegmentationClass/munster_000001_000019_leftImg8bit.png
 """
 import argparse
+import glob
 import os
 import os.path as osp
-from pathlib import Path
-import shutil
-import glob
 import random
-from tqdm import tqdm  # type: ignore
-from cityscapesscripts.preparation.json2labelImg import json2labelImg  # type: ignore
+import shutil
+from pathlib import Path
+
 from cityscapesscripts.helpers.labels import labels  # type: ignore
+from cityscapesscripts.preparation.json2labelImg import json2labelImg  # type: ignore
+from tqdm import tqdm  # type: ignore
 
 
 def convert_json_to_label(json_file) -> str:
@@ -76,7 +77,7 @@ def convert_json_to_label(json_file) -> str:
 
 def get_args():
     parser = argparse.ArgumentParser('convert cityscapes dataset to ymir')
-    parser.add_argument('--root_dir', help='root dir for voc devkit')
+    parser.add_argument('--root_dir', help='root dir for cityscapes dataset')
     parser.add_argument('--split', default='train', help='split for dataset')
     parser.add_argument('--out_dir', help='the output directory', default='./out')
     parser.add_argument('--num', help='sample number for dataset', default=0, type=int)
