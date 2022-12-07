@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 
 def convert_rgb_to_label_id(rgb_img: Union[Image.Image, np.ndarray, str],
-                            palatte_dict: Dict[Tuple, int],
+                            palette_dict: Dict[Tuple, int],
                             dtype: Any = np.uint8) -> Union[Image.Image, np.ndarray, str]:
     """
     map rgb color to label id, start from 1
@@ -29,7 +29,7 @@ def convert_rgb_to_label_id(rgb_img: Union[Image.Image, np.ndarray, str],
     np_label_id = np.ones(shape=(height, width), dtype=dtype) * 255
 
     # rgb = (0,0,0), idx = 0 can skip.
-    for rgb, idx in palatte_dict.items():
+    for rgb, idx in palette_dict.items():
         r = np_rgb_img[:, :, 0] == rgb[0]
         g = np_rgb_img[:, :, 1] == rgb[1]
         b = np_rgb_img[:, :, 2] == rgb[2]
@@ -47,7 +47,7 @@ def convert_rgb_to_label_id(rgb_img: Union[Image.Image, np.ndarray, str],
         assert False, f'unknown rgb_img format {type(rgb_img)}'
 
 
-def save_rgb_to_label_id(rgb_img: str, label_id_img: str, palatte_dict: Dict[Tuple, int], dtype: Any = np.uint8):
+def save_rgb_to_label_id(rgb_img: str, label_id_img: str, palette_dict: Dict[Tuple, int], dtype: Any = np.uint8):
     """
     map rgb color to label id, start from 1
     for the output mask, note to ignore label 0.
@@ -58,7 +58,7 @@ def save_rgb_to_label_id(rgb_img: str, label_id_img: str, palatte_dict: Dict[Tup
     np_label_id = np.ones(shape=(height, width), dtype=dtype) * 255
 
     # rgb = (0,0,0), idx = 0 can skip.
-    for rgb, idx in palatte_dict.items():
+    for rgb, idx in palette_dict.items():
         r = np_rgb_img[:, :, 0] == rgb[0]
         g = np_rgb_img[:, :, 1] == rgb[1]
         b = np_rgb_img[:, :, 2] == rgb[2]
@@ -98,17 +98,17 @@ def convert_ymir_to_mmseg(ymir_cfg: edict) -> Dict[str, str]:
 
     # note: class_names maybe the subset of label_map
     class_names = ymir_cfg.param.class_names
-    palatte_dict: Dict[Tuple, int] = {}
+    palette_dict: Dict[Tuple, int] = {}
     for idx, line in enumerate(lines):
         label, rgb = line.split(':')[0:2]
         r, g, b = [int(x) for x in rgb.split(',')]
         if label in class_names:
             class_id = class_names.index(label)
-            palatte_dict[(r, g, b)] = class_id
+            palette_dict[(r, g, b)] = class_id
             logging.info(f'label map: {class_id}={label} ({r}, {g}, {b})')
         else:
             logging.info(f'ignored label in labelmap.txt: {label} {rgb}')
-    # palatte_dict[(0, 0, 0)] = 255
+    # palette_dict[(0, 0, 0)] = 255
 
     for split in ['train', 'val']:
         with open(ymir_ann_files[split], 'r') as fp:
@@ -120,7 +120,7 @@ def convert_ymir_to_mmseg(ymir_cfg: edict) -> Dict[str, str]:
 
             new_ann_path = osp.join(out_dir, osp.relpath(ann_path, in_dir))
             os.makedirs(osp.dirname(new_ann_path), exist_ok=True)
-            save_rgb_to_label_id(ann_path, new_ann_path, palatte_dict)
+            save_rgb_to_label_id(ann_path, new_ann_path, palette_dict)
             fw.write(f'{img_path}\t{new_ann_path}\n')
         fw.close()
 

@@ -1,7 +1,8 @@
 import time
 from enum import IntEnum
-from easydict import EasyDict as edict
 from typing import Union
+
+from easydict import EasyDict as edict
 from tensorboardX import SummaryWriter
 
 from ymir_exc import env

@@ -68,7 +68,7 @@ class EnvInputConfig(BaseModel):
     training_index_file: str = ''
     val_index_file: str = ''
     candidate_index_file: str = ''
-    config_file: str = '/in/config.yaml'
+    config_file: str = settings.DEFAULT_CONFIG_FILE_PATH
 
 
 class EnvOutputConfig(BaseModel):

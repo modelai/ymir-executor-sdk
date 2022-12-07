@@ -16,7 +16,7 @@ from easydict import EasyDict as edict
 
 from ymir_exc import env
 from ymir_exc import result_writer as rw
-from ymir_exc.monitor import write_monitor_logger_for_multiple_tasks, YmirTask
+from ymir_exc.monitor import YmirTask, write_monitor_logger_for_multiple_tasks
 
 
 def find_free_port():
