@@ -39,7 +39,6 @@ class YmirStage(IntEnum):
 
 
 class YmirStageWeight(object):
-
     def __init__(self, weights: List[float] = None):
         """
         weights: weight for each ymir stage
@@ -53,12 +52,12 @@ class YmirStageWeight(object):
             self.weights = weights
         else:
             self.weights = [0, 0, 0]
-            self.weights[0] = float(os.getenv('PREPROCESS_WEIGHT', 0.00001))
-            self.weights[1] = float(os.getenv('TASK_WEIGHT', 0.99998))
-            self.weights[2] = float(os.getenv('POSTPROCESS_WEIGHT', 0.00001))
+            self.weights[0] = float(os.getenv("PREPROCESS_WEIGHT", 0.00001))
+            self.weights[1] = float(os.getenv("TASK_WEIGHT", 0.99998))
+            self.weights[2] = float(os.getenv("POSTPROCESS_WEIGHT", 0.00001))
 
-        assert math.isclose(sum(self.weights), 1), f'sum of weights {weights} != 1'
-        assert len(self.weights) == 3, f'len of weights {weights} != 3'
+        assert math.isclose(sum(self.weights), 1), f"sum of weights {weights} != 1"
+        assert len(self.weights) == 3, f"len of weights {weights} != 3"
 
     def get_stage_process(self, stage: Union[YmirStage, str], p: float) -> float:
         """return the stage process for a task, range in [0, 1]
@@ -69,23 +68,27 @@ class YmirStageWeight(object):
         for postprocess stage:
             return process range in [self.weight[0]+self.weight[1], 1]
         """
-        if stage in [YmirStage.PREPROCESS, 'preprocess']:
+        if stage in [YmirStage.PREPROCESS, "preprocess"]:
             return self.weights[0] * p
-        elif stage in [YmirStage.TASK, 'task']:
+        elif stage in [YmirStage.TASK, "task"]:
             return self.weights[0] + self.weights[1] * p
-        elif stage in [YmirStage.POSTPROCESS, 'postprocess']:
+        elif stage in [YmirStage.POSTPROCESS, "postprocess"]:
             return self.weights[0] + self.weights[1] + self.weights[2] * p
         else:
-            raise NotImplementedError(f'unknown stage {stage}')
+            raise NotImplementedError(f"unknown stage {stage}")
 
 
-@deprecated(version='1.3.1',
-            reason="This method is deprecated, recommand use all-in-on function write_ymir_monitor_process() instead")
-def get_ymir_process(stage: Union[YmirStage, str],
-                     p: float,
-                     task_idx: int = 0,
-                     task_num: int = 1,
-                     weights: YmirStageWeight = None) -> float:
+@deprecated(
+    version="1.3.1",
+    reason="This method is deprecated, recommand use all-in-on function write_ymir_monitor_process() instead",
+)
+def get_ymir_process(
+    stage: Union[YmirStage, str],
+    p: float,
+    task_idx: int = 0,
+    task_num: int = 1,
+    weights: YmirStageWeight = None,
+) -> float:
     """return the process for ymir, range in [0,1]
     stage: pre-process/task/post-process
     p: naive percent for stage, range in [0,1]
@@ -106,7 +109,7 @@ def get_ymir_process(stage: Union[YmirStage, str],
         weights = YmirStageWeight()
 
     if p < 0 or p > 1.0:
-        raise Exception(f'p not in [0,1], p={p}')
+        raise Exception(f"p not in [0,1], p={p}")
 
     task_ratio = 1.0 / task_num
     task_init = task_idx * task_ratio
@@ -122,7 +125,7 @@ def get_merged_config() -> edict:
 
     def get_code_config(code_config_file: str) -> dict:
         if code_config_file:
-            with open(code_config_file, 'r') as f:
+            with open(code_config_file, "r") as f:
                 return yaml.safe_load(f)
         else:
             return dict()
@@ -131,9 +134,9 @@ def get_merged_config() -> edict:
 
     # the hyperparameter information
     exe_cfg = env.get_executor_config()
-    if exe_cfg.get('git_url', ''):
+    if exe_cfg.get("git_url", ""):
         # live code mode
-        code_config_file = exe_cfg.get('code_config', '')
+        code_config_file = exe_cfg.get("code_config", "")
         code_cfg = get_code_config(code_config_file)
         code_cfg.update(exe_cfg)
 
@@ -162,38 +165,46 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
     """
     cfg = get_merged_config()
     out_dir = cfg.ymir.output.root_dir
-    ymir_dataset_dir = osp.join(out_dir, 'ymir_dataset')
+    ymir_dataset_dir = osp.join(out_dir, "ymir_dataset")
     os.makedirs(ymir_dataset_dir, exist_ok=True)
 
     output_info = {}
-    for split, prefix in zip(['train', 'val'], ['training', 'val']):
-        ymir_index_file = getattr(cfg.ymir.input, f'{prefix}_index_file')
+    for split, prefix in zip(["train", "val"], ["training", "val"]):
+        ymir_index_file = getattr(cfg.ymir.input, f"{prefix}_index_file")
         with open(ymir_index_file) as fp:
             lines = fp.readlines()
 
         img_id = 0
         ann_id = 0
-        data: Dict[str, List] = dict(images=[], annotations=[], categories=[], licenses=[])
+        data: Dict[str, List] = dict(
+            images=[], annotations=[], categories=[], licenses=[]
+        )
 
         cat_id_start = 0 if cat_id_from_zero else 1
         for id, name in enumerate(cfg.param.class_names):
-            data['categories'].append(dict(id=id + cat_id_start, name=name, supercategory="none"))
+            data["categories"].append(
+                dict(id=id + cat_id_start, name=name, supercategory="none")
+            )
 
         for line in lines:
             img_file, ann_file = line.strip().split()
             width, height = imagesize.get(img_file)
             img_info = dict(file_name=img_file, height=height, width=width, id=img_id)
 
-            data['images'].append(img_info)
+            data["images"].append(img_info)
 
             if osp.exists(ann_file):
-                for ann_line in open(ann_file, 'r').readlines():
-                    ann_strlist = ann_line.strip().split(',')
+                for ann_line in open(ann_file, "r").readlines():
+                    ann_strlist = ann_line.strip().split(",")
                     class_id, x1, y1, x2, y2 = [int(s) for s in ann_strlist[0:5]]
                     bbox_width = x2 - x1
                     bbox_height = y2 - y1
                     bbox_area = bbox_width * bbox_height
-                    bbox_quality = float(ann_strlist[5]) if len(ann_strlist) > 5 and ann_strlist[5].isnumeric() else 1
+                    bbox_quality = (
+                        float(ann_strlist[5])
+                        if len(ann_strlist) > 5 and ann_strlist[5].isnumeric()
+                        else 1
+                    )
                     ann_info = dict(
                         bbox=[x1, y1, bbox_width, bbox_height],  # x,y,width,height
                         area=bbox_area,
@@ -203,34 +214,41 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
                         segmentation=[[x1, y1, x1, y2, x2, y2, x2, y1]],
                         category_id=class_id + cat_id_start,  # start from cat_id_start
                         id=ann_id,
-                        image_id=img_id)
-                    data['annotations'].append(ann_info)
+                        image_id=img_id,
+                    )
+                    data["annotations"].append(ann_info)
                     ann_id += 1
 
             img_id += 1
 
-        split_json_file = osp.join(ymir_dataset_dir, f'ymir_{split}.json')
-        with open(split_json_file, 'w') as fw:
+        split_json_file = osp.join(ymir_dataset_dir, f"ymir_{split}.json")
+        with open(split_json_file, "w") as fw:
             json.dump(data, fw)
 
-        output_info[split] = dict(img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file)
+        output_info[split] = dict(
+            img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file
+        )
 
     return output_info
 
 
-def get_weight_files(cfg: edict, suffix: Tuple[str, ...] = ('.pt', '.pth')) -> List[str]:
+def get_weight_files(
+    cfg: edict, suffix: Tuple[str, ...] = (".pt", ".pth")
+) -> List[str]:
     """
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path with `suffix`
     return the weight file list
     """
     if cfg.ymir.run_training:
-        model_params_path = cfg.param.get('pretrained_model_params', [])
+        model_params_path = cfg.param.get("pretrained_model_params", [])
     else:
         model_params_path = cfg.param.model_params_path
 
     model_dir = cfg.ymir.input.models_dir
     model_params_path = [
-        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith(suffix)
+        osp.join(model_dir, p)
+        for p in model_params_path
+        if osp.exists(osp.join(model_dir, p)) and p.endswith(suffix)
     ]
 
     return model_params_path
@@ -252,24 +270,27 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
     v = cfg.param.get(key, default_value)
 
     if isinstance(v, str):
-        if v.lower() in ['f', 'false', '0']:
+        if v.lower() in ["f", "false", "0"]:
             return False
-        elif v.lower() in ['t', 'true', '1']:
+        elif v.lower() in ["t", "true", "1"]:
             return True
         else:
-            raise Exception(f'unknown bool str {key} = {v}')
+            raise Exception(f"unknown bool str {key} = {v}")
     elif isinstance(v, int):
         if v in [0, 1]:
             return bool(v)
         else:
-            raise Exception(f'unknown bool int {key} = {v}')
+            raise Exception(f"unknown bool int {key} = {v}")
     elif isinstance(v, bool):
         return v
     else:
-        raise Exception(f'unknown bool type {key} = {v} ({type(v)})')
+        raise Exception(f"unknown bool type {key} = {v} ({type(v)})")
 
 
-@versionadded(version='1.3.1', reason="support user custom by hyper-parameter: ymir_saved_file_patterns")
+@versionadded(
+    version="1.3.1",
+    reason="support user custom by hyper-parameter: ymir_saved_file_patterns",
+)
 def filter_saved_files(cfg: edict, files: List[str]):
     """
     if files == []:
@@ -285,17 +306,21 @@ def filter_saved_files(cfg: edict, files: List[str]):
 
     return filtered relpath
     """
-    ymir_saved_file_patterns: str = cfg.param.get('ymir_saved_file_patterns', '')
+    ymir_saved_file_patterns: str = cfg.param.get("ymir_saved_file_patterns", "")
 
     root_dir = cfg.ymir.output.models_dir
     if not files:
         root_dir = cfg.ymir.output.models_dir
-        files = [osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir, '*')) if osp.isfile(f)]
+        files = [
+            osp.relpath(f, start=root_dir)
+            for f in glob.glob(osp.join(root_dir, "*"))
+            if osp.isfile(f)
+        ]
     else:
         files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
 
     if ymir_saved_file_patterns:
-        patterns: List[str] = ymir_saved_file_patterns.split(',')
+        patterns: List[str] = ymir_saved_file_patterns.split(",")
         custom_saved_files = []
 
         for f in files:
@@ -305,7 +330,9 @@ def filter_saved_files(cfg: edict, files: List[str]):
                         custom_saved_files.append(f)
                         break
                 except Exception as e:
-                    warnings.warn(f'bad python regular expression pattern {pattern} with {e}')
+                    warnings.warn(
+                        f"bad python regular expression pattern {pattern} with {e}"
+                    )
                     patterns.remove(pattern)
 
         return custom_saved_files
@@ -314,12 +341,17 @@ def filter_saved_files(cfg: edict, files: List[str]):
         return files
 
 
-@versionchanged(version='1.3.1', reason="support user custom by hyper-parameter: ymir_saved_file_patterns")
-def write_ymir_training_result(cfg: edict,
-                               map50: float,
-                               files: List[str],
-                               id: str,
-                               attachments: Dict[str, List[str]] = None) -> None:
+@versionchanged(
+    version="1.3.1",
+    reason="support user custom by hyper-parameter: ymir_saved_file_patterns",
+)
+def write_ymir_training_result(
+    cfg: edict,
+    map50: float,
+    files: List[str],
+    id: str,
+    attachments: Dict[str, List[str]] = None,
+) -> None:
     """write training result to disk for ymir
     cfg: ymir merged config, view get_merged_config()
     map50: evaluation result
@@ -333,57 +365,67 @@ def write_ymir_training_result(cfg: edict,
     if files:
         if rw.multiple_model_stages_supportable():
             if id.isnumeric():
-                warnings.warn(f'use stage_{id} instead {id} for stage name')
-                id = f'stage_{id}'
-            _write_latest_ymir_training_result(cfg, float(map50), id, files, attachments)
+                warnings.warn(f"use stage_{id} instead {id} for stage name")
+                id = f"stage_{id}"
+            _write_latest_ymir_training_result(
+                cfg, float(map50), id, files, attachments
+            )
         else:
             _write_earliest_ymir_training_result(cfg, float(map50), id, files)
 
 
-def _write_latest_ymir_training_result(cfg: edict,
-                                       map50: float,
-                                       id: str,
-                                       files: List[str],
-                                       attachments: Dict[str, List[str]] = None) -> None:
+def _write_latest_ymir_training_result(
+    cfg: edict,
+    map50: float,
+    id: str,
+    files: List[str],
+    attachments: Dict[str, List[str]] = None,
+) -> None:
     """
     for ymir>=1.2.0
     """
     rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
 
 
-def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, files: List[str]) -> None:
+def _write_earliest_ymir_training_result(
+    cfg: edict, map50: float, id: str, files: List[str]
+) -> None:
     """
     for 1.0.0 <= ymir <=1.1.0
     """
 
     training_result_file = cfg.ymir.output.training_result_file
     if osp.exists(training_result_file):
-        with open(training_result_file, 'r') as f:
+        with open(training_result_file, "r") as f:
             training_result = yaml.safe_load(stream=f)
 
         if training_result is None:
             training_result = {}
-        training_result['model'] = files
-        max_map50 = max(training_result.get('map', 0), map50)
-        training_result['map'] = max_map50
+        training_result["model"] = files
+        max_map50 = max(training_result.get("map", 0), map50)
+        training_result["map"] = max_map50
 
         if 0 < map50 < max_map50:
-            warnings.warn(f'map50 = {map50} < max_map50 = {max_map50} when save all files, ignore map50')
+            warnings.warn(
+                f"map50 = {map50} < max_map50 = {max_map50} when save all files, ignore map50"
+            )
         # when save other files like onnx model, we cannot obtain map50, set map50=0 to use the max_map50
         training_result[id] = map50 if map50 > 0 else max_map50
     else:
-        training_result = {'model': files, 'map': map50, id: map50}
+        training_result = {"model": files, "map": map50, id: map50}
 
-    with open(training_result_file, 'w') as f:
+    with open(training_result_file, "w") as f:
         yaml.safe_dump(training_result, f)
 
 
-def write_ymir_monitor_process(cfg: edict,
-                               task: Union[YmirTask, str],
-                               naive_stage_percent: float,
-                               stage: Union[YmirStage, str],
-                               stage_weights: Union[YmirStageWeight, List[float]] = None,
-                               task_order: str = 'tmi') -> None:
+def write_ymir_monitor_process(
+    cfg: edict,
+    task: Union[YmirTask, str],
+    naive_stage_percent: float,
+    stage: Union[YmirStage, str],
+    stage_weights: Union[YmirStageWeight, List[float]] = None,
+    task_order: str = "tmi",
+) -> None:
     """all in one process monitor function
     task: training, infer or mining
     stage: pre-process, task or post-process
@@ -395,7 +437,7 @@ def write_ymir_monitor_process(cfg: edict,
         stage_weights = YmirStageWeight(weights=stage_weights)
 
     if naive_stage_percent < 0 or naive_stage_percent > 1.0:
-        raise Exception(f'p not in [0,1], naive stage percent={naive_stage_percent}')
+        raise Exception(f"p not in [0,1], naive stage percent={naive_stage_percent}")
 
     naive_task_percent = stage_weights.get_stage_process(stage, naive_stage_percent)
     write_monitor_logger_for_multiple_tasks(cfg, task, naive_task_percent, task_order)

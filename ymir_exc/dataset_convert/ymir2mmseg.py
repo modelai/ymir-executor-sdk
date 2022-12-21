@@ -12,9 +12,11 @@ from PIL import Image
 from tqdm import tqdm
 
 
-def convert_rgb_to_label_id(rgb_img: Union[Image.Image, np.ndarray, str],
-                            palette_dict: Dict[Tuple, int],
-                            dtype: Any = np.uint8) -> Union[Image.Image, np.ndarray, str]:
+def convert_rgb_to_label_id(
+    rgb_img: Union[Image.Image, np.ndarray, str],
+    palette_dict: Dict[Tuple, int],
+    dtype: Any = np.uint8,
+) -> Union[Image.Image, np.ndarray, str]:
     """
     map rgb color to label id, start from 1
     for the output mask, note to ignore label 0.
@@ -39,15 +41,22 @@ def convert_rgb_to_label_id(rgb_img: Union[Image.Image, np.ndarray, str],
     if isinstance(rgb_img, (Image.Image, str)):
         # mode = L: 8-bit unsigned integer pixels
         # mode = I: 32-bit signed integer pixels
-        pil_label_id_img = Image.fromarray(np_label_id, mode='L' if dtype == np.uint8 else 'I')
+        pil_label_id_img = Image.fromarray(
+            np_label_id, mode="L" if dtype == np.uint8 else "I"
+        )
         return pil_label_id_img
     elif isinstance(rgb_img, np.ndarray):
         return np_label_id
     else:
-        assert False, f'unknown rgb_img format {type(rgb_img)}'
+        assert False, f"unknown rgb_img format {type(rgb_img)}"
 
 
-def save_rgb_to_label_id(rgb_img: str, label_id_img: str, palette_dict: Dict[Tuple, int], dtype: Any = np.uint8):
+def save_rgb_to_label_id(
+    rgb_img: str,
+    label_id_img: str,
+    palette_dict: Dict[Tuple, int],
+    dtype: Any = np.uint8,
+):
     """
     map rgb color to label id, start from 1
     for the output mask, note to ignore label 0.
@@ -67,7 +76,9 @@ def save_rgb_to_label_id(rgb_img: str, label_id_img: str, palette_dict: Dict[Tup
 
     # mode = L: 8-bit unsigned integer pixels
     # mode = I: 32-bit signed integer pixels
-    pil_label_id_img = Image.fromarray(np_label_id, mode='L' if dtype == np.uint8 else 'I')
+    pil_label_id_img = Image.fromarray(
+        np_label_id, mode="L" if dtype == np.uint8 else "I"
+    )
     pil_label_id_img.save(label_id_img)
 
 
@@ -77,51 +88,55 @@ def convert_ymir_to_mmseg(ymir_cfg: edict) -> Dict[str, str]:
     return new index files
     note: call before ddp, avoid multi-process problem
     """
-    ymir_ann_files = dict(train=ymir_cfg.ymir.input.training_index_file,
-                          val=ymir_cfg.ymir.input.val_index_file,
-                          test=ymir_cfg.ymir.input.candidate_index_file)
+    ymir_ann_files = dict(
+        train=ymir_cfg.ymir.input.training_index_file,
+        val=ymir_cfg.ymir.input.val_index_file,
+        test=ymir_cfg.ymir.input.candidate_index_file,
+    )
 
     in_dir = ymir_cfg.ymir.input.root_dir
     out_dir = ymir_cfg.ymir.output.root_dir
     new_ann_files = dict()
-    for split in ['train', 'val']:
-        new_ann_files[split] = osp.join(out_dir, osp.relpath(ymir_ann_files[split], in_dir))
+    for split in ["train", "val"]:
+        new_ann_files[split] = osp.join(
+            out_dir, osp.relpath(ymir_ann_files[split], in_dir)
+        )
 
-    new_ann_files['test'] = ymir_ann_files['test']
+    new_ann_files["test"] = ymir_ann_files["test"]
     # call before ddp, avoid multi-process problem, just to return new_ann_files
-    if osp.exists(new_ann_files['train']):
+    if osp.exists(new_ann_files["train"]):
         return new_ann_files
 
-    label_map_txt = osp.join(ymir_cfg.ymir.input.annotations_dir, 'labelmap.txt')
-    with open(label_map_txt, 'r') as fp:
+    label_map_txt = osp.join(ymir_cfg.ymir.input.annotations_dir, "labelmap.txt")
+    with open(label_map_txt, "r") as fp:
         lines = fp.readlines()
 
     # note: class_names maybe the subset of label_map
     class_names = ymir_cfg.param.class_names
     palette_dict: Dict[Tuple, int] = {}
     for idx, line in enumerate(lines):
-        label, rgb = line.split(':')[0:2]
-        r, g, b = [int(x) for x in rgb.split(',')]
+        label, rgb = line.split(":")[0:2]
+        r, g, b = [int(x) for x in rgb.split(",")]
         if label in class_names:
             class_id = class_names.index(label)
             palette_dict[(r, g, b)] = class_id
-            logging.info(f'label map: {class_id}={label} ({r}, {g}, {b})')
+            logging.info(f"label map: {class_id}={label} ({r}, {g}, {b})")
         else:
-            logging.info(f'ignored label in labelmap.txt: {label} {rgb}')
+            logging.info(f"ignored label in labelmap.txt: {label} {rgb}")
     # palette_dict[(0, 0, 0)] = 255
 
-    for split in ['train', 'val']:
-        with open(ymir_ann_files[split], 'r') as fp:
+    for split in ["train", "val"]:
+        with open(ymir_ann_files[split], "r") as fp:
             lines = fp.readlines()
 
-        fw = open(new_ann_files[split], 'w')
-        for line in tqdm(lines, desc=f'convert {split} dataset'):
+        fw = open(new_ann_files[split], "w")
+        for line in tqdm(lines, desc=f"convert {split} dataset"):
             img_path, ann_path = line.strip().split()
 
             new_ann_path = osp.join(out_dir, osp.relpath(ann_path, in_dir))
             os.makedirs(osp.dirname(new_ann_path), exist_ok=True)
             save_rgb_to_label_id(ann_path, new_ann_path, palette_dict)
-            fw.write(f'{img_path}\t{new_ann_path}\n')
+            fw.write(f"{img_path}\t{new_ann_path}\n")
         fw.close()
 
     return new_ann_files

@@ -18,14 +18,15 @@ class YmirTask(IntEnum):
 
 def write_monitor_logger(percent: float) -> None:
     env_config = env.get_current_env()
-    with open(env_config.output.monitor_file, 'w') as f:
-        f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{TASK_STATE_RUNNING}\n")
+    with open(env_config.output.monitor_file, "w") as f:
+        f.write(
+            f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{TASK_STATE_RUNNING}\n"
+        )
 
 
-def write_monitor_logger_for_multiple_tasks(cfg: edict,
-                                            task: Union[YmirTask, str],
-                                            percent: float,
-                                            order='tmi') -> None:
+def write_monitor_logger_for_multiple_tasks(
+    cfg: edict, task: Union[YmirTask, str], percent: float, order="tmi"
+) -> None:
     """write monitor for multiple class
     current support follow case:
     1. training
@@ -35,14 +36,15 @@ def write_monitor_logger_for_multiple_tasks(cfg: edict,
        * percent in [0, 1], will map to [0, 0,5] or [0,5, 1] according to order and task.
     """
     if isinstance(task, str):
-        assert task in ['training', 'mining', 'infer'], f'unsupported task {task}'
+        assert task in ["training", "mining", "infer"], f"unsupported task {task}"
 
-    assert 0 <= percent <= 1, f'percent {percent} not in [0, 1]'
-    assert order in ['tmi', 'tim'], f'unsupported order {order}'
+    assert 0 <= percent <= 1, f"percent {percent} not in [0, 1]"
+    assert order in ["tmi", "tim"], f"unsupported order {order}"
 
     if cfg.ymir.run_infer and cfg.ymir.run_mining:
-        if (order == 'tmi' and task in ['mining', YmirTask.MINING]) or (order == 'tim'
-                                                                        and task in ['infer', YmirTask.INFER]):  # noqa
+        if (order == "tmi" and task in ["mining", YmirTask.MINING]) or (
+            order == "tim" and task in ["infer", YmirTask.INFER]
+        ):  # noqa
             write_monitor_logger(percent=0.5 * percent)
         else:
             write_monitor_logger(percent=0.5 + 0.5 * percent)

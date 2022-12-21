@@ -61,30 +61,30 @@ class DatasetType(IntEnum):
 
 
 class EnvInputConfig(BaseModel):
-    root_dir: str = '/in'
-    assets_dir: str = '/in/assets'
-    annotations_dir: str = '/in/annotations'
-    models_dir: str = '/in/models'
-    training_index_file: str = ''
-    val_index_file: str = ''
-    candidate_index_file: str = ''
+    root_dir: str = "/in"
+    assets_dir: str = "/in/assets"
+    annotations_dir: str = "/in/annotations"
+    models_dir: str = "/in/models"
+    training_index_file: str = ""
+    val_index_file: str = ""
+    candidate_index_file: str = ""
     config_file: str = settings.DEFAULT_CONFIG_FILE_PATH
 
 
 class EnvOutputConfig(BaseModel):
-    root_dir: str = '/out'
-    models_dir: str = '/out/models'
-    tensorboard_dir: str = '/out/tensorboard'
-    training_result_file: str = '/out/models/result.yaml'
-    mining_result_file: str = '/out/result.tsv'
-    infer_result_file: str = '/out/infer-result.json'
-    monitor_file: str = '/out/monitor.txt'
-    executor_log_file: str = '/out/ymir-executor-out.log'
+    root_dir: str = "/out"
+    models_dir: str = "/out/models"
+    tensorboard_dir: str = "/out/tensorboard"
+    training_result_file: str = "/out/models/result.yaml"
+    mining_result_file: str = "/out/result.tsv"
+    infer_result_file: str = "/out/infer-result.json"
+    monitor_file: str = "/out/monitor.txt"
+    executor_log_file: str = "/out/ymir-executor-out.log"
 
 
 class EnvConfig(BaseModel):
-    task_id: str = 'default-task'
-    protocol_version: str = '0.0.1'  # input/output api version
+    task_id: str = "default-task"
+    protocol_version: str = "0.0.1"  # input/output api version
     run_training: bool = False
     run_mining: bool = False
     run_infer: bool = False
@@ -94,11 +94,11 @@ class EnvConfig(BaseModel):
 
 
 def get_current_env() -> EnvConfig:
-    with open(settings.DEFAULT_ENV_FILE_PATH, 'r') as f:
+    with open(settings.DEFAULT_ENV_FILE_PATH, "r") as f:
         return EnvConfig.parse_obj(yaml.safe_load(f.read()))
 
 
 def get_executor_config() -> dict:
-    with open(get_current_env().input.config_file, 'r') as f:
+    with open(get_current_env().input.config_file, "r") as f:
         executor_config = yaml.safe_load(f)
     return executor_config

@@ -11,12 +11,18 @@ class TestMonitor(unittest.TestCase):
     # life cycle
     def __init__(self, methodName: str = ...) -> None:  # type: ignore
         super().__init__(methodName)
-        self._test_root = os.path.join('/tmp', 'test_tmi', *self.id().split(".")[-3:])
-        self._custom_env_file = os.path.join(self._test_root, 'env.yml')
-        self._training_result_file = os.path.join(self._test_root, 'out', 'training-result.yaml')
-        self._mining_result_file = os.path.join(self._test_root, 'out', 'mining-result.tsv')
-        self._infer_result_file = os.path.join(self._test_root, 'out', 'infer-result.json')
-        self._monitor_file = os.path.join(self._test_root, 'out', 'monitor.txt')
+        self._test_root = os.path.join("/tmp", "test_tmi", *self.id().split(".")[-3:])
+        self._custom_env_file = os.path.join(self._test_root, "env.yml")
+        self._training_result_file = os.path.join(
+            self._test_root, "out", "training-result.yaml"
+        )
+        self._mining_result_file = os.path.join(
+            self._test_root, "out", "mining-result.tsv"
+        )
+        self._infer_result_file = os.path.join(
+            self._test_root, "out", "infer-result.json"
+        )
+        self._monitor_file = os.path.join(self._test_root, "out", "monitor.txt")
 
     def setUp(self) -> None:
         settings.DEFAULT_ENV_FILE_PATH = self._custom_env_file
@@ -33,21 +39,21 @@ class TestMonitor(unittest.TestCase):
         if os.path.isdir(self._test_root):
             shutil.rmtree(self._test_root)
         os.makedirs(self._test_root)
-        os.makedirs(os.path.join(self._test_root, 'out'), exist_ok=True)
+        os.makedirs(os.path.join(self._test_root, "out"), exist_ok=True)
 
     def _prepare_env_config(self) -> None:
         env_obj = {
-            'task_id': 'task0',
-            'output': {
-                'root_dir': os.path.join(self._test_root, 'out'),
-                'models_dir': os.path.join(self._test_root, 'out', 'models'),
-                'training_result_file': self._training_result_file,
-                'mining_result_file': self._mining_result_file,
-                'infer_result_file': self._infer_result_file,
-                'monitor_file': self._monitor_file,
+            "task_id": "task0",
+            "output": {
+                "root_dir": os.path.join(self._test_root, "out"),
+                "models_dir": os.path.join(self._test_root, "out", "models"),
+                "training_result_file": self._training_result_file,
+                "mining_result_file": self._mining_result_file,
+                "infer_result_file": self._infer_result_file,
+                "monitor_file": self._monitor_file,
             },
         }
-        with open(self._custom_env_file, 'w') as f:
+        with open(self._custom_env_file, "w") as f:
             yaml.safe_dump(env_obj, f)
 
     def _deprepare_dirs(self) -> None:
@@ -56,7 +62,7 @@ class TestMonitor(unittest.TestCase):
 
     # protected: check results
     def _check_monitor(self, percent: float) -> None:
-        with open(self._monitor_file, 'r') as f:
+        with open(self._monitor_file, "r") as f:
             lines = f.read().splitlines()
         task_id, timestamp_str, percent_str, state_str, *_ = lines[0].split()
 

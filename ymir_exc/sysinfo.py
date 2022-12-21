@@ -3,7 +3,7 @@ from typing import Tuple
 import torch
 
 
-def get_gpu_memory(device: str = 'cuda:0') -> Tuple[float, float]:
+def get_gpu_memory(device: str = "cuda:0") -> Tuple[float, float]:
     """
     code from https://github.com/ultralytics/yolov5
     return total memory, free memory
