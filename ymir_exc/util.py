@@ -7,7 +7,7 @@ import re
 import socket
 import warnings
 from enum import IntEnum
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import imagesize
 import yaml
@@ -39,7 +39,8 @@ class YmirStage(IntEnum):
 
 
 class YmirStageWeight(object):
-    def __init__(self, weights: List[float] = None):
+
+    def __init__(self, weights: Optional[List[float]] = None):
         """
         weights: weight for each ymir stage
         if weights is None:
@@ -87,7 +88,7 @@ def get_ymir_process(
     p: float,
     task_idx: int = 0,
     task_num: int = 1,
-    weights: YmirStageWeight = None,
+    weights: Optional[YmirStageWeight] = None,
 ) -> float:
     """return the process for ymir, range in [0,1]
     stage: pre-process/task/post-process
@@ -152,7 +153,7 @@ def get_merged_config() -> edict:
 
 def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, str]]:
     """
-    convert ymir dataset to coco format for training task
+    convert ymir detection dataset to coco format for training task
     for the input index file:
         ymir_index_file: for each line it likes: {img_path} \t {ann_path}
 
@@ -176,15 +177,11 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
 
         img_id = 0
         ann_id = 0
-        data: Dict[str, List] = dict(
-            images=[], annotations=[], categories=[], licenses=[]
-        )
+        data: Dict[str, List] = dict(images=[], annotations=[], categories=[], licenses=[])
 
         cat_id_start = 0 if cat_id_from_zero else 1
         for id, name in enumerate(cfg.param.class_names):
-            data["categories"].append(
-                dict(id=id + cat_id_start, name=name, supercategory="none")
-            )
+            data["categories"].append(dict(id=id + cat_id_start, name=name, supercategory="none"))
 
         for line in lines:
             img_file, ann_file = line.strip().split()
@@ -200,11 +197,7 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
                     bbox_width = x2 - x1
                     bbox_height = y2 - y1
                     bbox_area = bbox_width * bbox_height
-                    bbox_quality = (
-                        float(ann_strlist[5])
-                        if len(ann_strlist) > 5 and ann_strlist[5].isnumeric()
-                        else 1
-                    )
+                    bbox_quality = (float(ann_strlist[5]) if len(ann_strlist) > 5 and ann_strlist[5].isnumeric() else 1)
                     ann_info = dict(
                         bbox=[x1, y1, bbox_width, bbox_height],  # x,y,width,height
                         area=bbox_area,
@@ -225,16 +218,12 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
         with open(split_json_file, "w") as fw:
             json.dump(data, fw)
 
-        output_info[split] = dict(
-            img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file
-        )
+        output_info[split] = dict(img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file)
 
     return output_info
 
 
-def get_weight_files(
-    cfg: edict, suffix: Tuple[str, ...] = (".pt", ".pth")
-) -> List[str]:
+def get_weight_files(cfg: edict, suffix: Tuple[str, ...] = (".pt", ".pth")) -> List[str]:
     """
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path with `suffix`
     return the weight file list
@@ -246,9 +235,7 @@ def get_weight_files(
 
     model_dir = cfg.ymir.input.models_dir
     model_params_path = [
-        osp.join(model_dir, p)
-        for p in model_params_path
-        if osp.exists(osp.join(model_dir, p)) and p.endswith(suffix)
+        osp.join(model_dir, p) for p in model_params_path if osp.exists(osp.join(model_dir, p)) and p.endswith(suffix)
     ]
 
     return model_params_path
@@ -311,11 +298,7 @@ def filter_saved_files(cfg: edict, files: List[str]):
     root_dir = cfg.ymir.output.models_dir
     if not files:
         root_dir = cfg.ymir.output.models_dir
-        files = [
-            osp.relpath(f, start=root_dir)
-            for f in glob.glob(osp.join(root_dir, "*"))
-            if osp.isfile(f)
-        ]
+        files = [osp.relpath(f, start=root_dir) for f in glob.glob(osp.join(root_dir, "*")) if osp.isfile(f)]
     else:
         files = [osp.relpath(f, start=root_dir) if osp.isabs(f) else f for f in files]
 
@@ -330,9 +313,7 @@ def filter_saved_files(cfg: edict, files: List[str]):
                         custom_saved_files.append(f)
                         break
                 except Exception as e:
-                    warnings.warn(
-                        f"bad python regular expression pattern {pattern} with {e}"
-                    )
+                    warnings.warn(f"bad python regular expression pattern {pattern} with {e}")
                     patterns.remove(pattern)
 
         return custom_saved_files
@@ -342,19 +323,34 @@ def filter_saved_files(cfg: edict, files: List[str]):
 
 
 @versionchanged(
-    version="1.3.1",
-    reason="support user custom by hyper-parameter: ymir_saved_file_patterns",
+    version="2.0.0",
+    reason="add support for segmentation",
 )
 def write_ymir_training_result(
     cfg: edict,
-    map50: float,
     files: List[str],
     id: str,
-    attachments: Dict[str, List[str]] = None,
+    map50: Optional[float] = None,
+    evaluation_result: Dict[str, Union[float, int]] = {},
+    evaluate_config: Optional[dict] = None,
+    attachments: Optional[Dict[str, List[str]]] = None,
 ) -> None:
     """write training result to disk for ymir
     cfg: ymir merged config, view get_merged_config()
-    map50: evaluation result
+    evaluation_result (Dict[str, Union[float, int]]):
+            detection example: `{'mAP': 0.65, ...}`
+            evaluation result of this stage, it contains:
+                mAP (float, required): mean average precision
+                mAR (float, optional): mean average recall
+                tp (int, optional): true positive box count
+                fp (int, optional): false positive box count
+                fn (int, optional): false negative box count
+            semantic segmentation example: {'miou': 0.78, ...}
+            instance segmentation example: {'maskAP': 0.6, ...}
+    evaluate_config (dict): configurations used to evaluate this model, which contains:
+            iou_thr (float): iou threshold
+            conf_thr (float): confidence threshold
+    map50: evaluation result, depracated
     files: weight and related files to save, [] means save all files in /out/models
     id: weight name to distinguish models from different epoch/step
     attachments: attachment files, All files should under
@@ -367,29 +363,41 @@ def write_ymir_training_result(
             if id.isnumeric():
                 warnings.warn(f"use stage_{id} instead {id} for stage name")
                 id = f"stage_{id}"
-            _write_latest_ymir_training_result(
-                cfg, float(map50), id, files, attachments
-            )
+            _write_latest_ymir_training_result(cfg=cfg,
+                                               map50=map50,
+                                               id=id,
+                                               files=files,
+                                               evaluation_result=evaluation_result,
+                                               evaluate_config=evaluate_config,
+                                               attachments=attachments)
         else:
-            _write_earliest_ymir_training_result(cfg, float(map50), id, files)
+            if map50:
+                _write_earliest_ymir_training_result(cfg, float(map50), id, files)
+            else:
+                raise Exception('old ymir not support evaluation result')
 
 
 def _write_latest_ymir_training_result(
     cfg: edict,
-    map50: float,
     id: str,
     files: List[str],
-    attachments: Dict[str, List[str]] = None,
+    evaluation_result: Dict[str, Union[float, int]] = {},
+    evaluate_config: Optional[dict] = None,
+    map50: Optional[float] = None,
+    attachments: Optional[Dict[str, List[str]]] = None,
 ) -> None:
     """
     for ymir>=1.2.0
     """
-    rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
+    rw.write_model_stage(stage_name=id,
+                         files=files,
+                         evaluation_result=evaluation_result,
+                         evaluate_config=evaluate_config,
+                         mAP=map50,
+                         attachments=attachments)
 
 
-def _write_earliest_ymir_training_result(
-    cfg: edict, map50: float, id: str, files: List[str]
-) -> None:
+def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, files: List[str]) -> None:
     """
     for 1.0.0 <= ymir <=1.1.0
     """
@@ -406,9 +414,7 @@ def _write_earliest_ymir_training_result(
         training_result["map"] = max_map50
 
         if 0 < map50 < max_map50:
-            warnings.warn(
-                f"map50 = {map50} < max_map50 = {max_map50} when save all files, ignore map50"
-            )
+            warnings.warn(f"map50 = {map50} < max_map50 = {max_map50} when save all files, ignore map50")
         # when save other files like onnx model, we cannot obtain map50, set map50=0 to use the max_map50
         training_result[id] = map50 if map50 > 0 else max_map50
     else:
@@ -423,7 +429,7 @@ def write_ymir_monitor_process(
     task: Union[YmirTask, str],
     naive_stage_percent: float,
     stage: Union[YmirStage, str],
-    stage_weights: Union[YmirStageWeight, List[float]] = None,
+    stage_weights: Optional[Union[YmirStageWeight, List[float]]] = None,
     task_order: str = "tmi",
 ) -> None:
     """all in one process monitor function

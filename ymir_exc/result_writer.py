@@ -90,7 +90,7 @@ def write_model_stage(stage_name: str,
         raise ValueError(
             f"invalid stage_name: {stage_name}, need alphabets, numbers and underlines, start with alphabets")
 
-    if evaluation_result is None:
+    if not evaluation_result:
         if mAP is None:
             raise Exception('please specify evaluation_result')
         else:
@@ -104,7 +104,7 @@ def write_model_stage(stage_name: str,
     elif 'mAP' in evaluation_result:
         top1_metric = 'miou'
     else:
-        raise Exception('unknown evaluation_result, without one of [maskAP, miou, mAP]')
+        raise Exception(f'unknown evaluation_result {evaluation_result}, without one of [maskAP, miou, mAP]')
 
     training_result: dict = ({})  # key: stage name, value: stage name, files, timestamp, mAP
 
