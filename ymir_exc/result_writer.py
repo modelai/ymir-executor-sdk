@@ -226,7 +226,8 @@ def write_infer_result(infer_result: Dict, algorithm: Optional[str] = 'detection
         with open(env_config.output.infer_result_file, "w") as f:
             f.write(json.dumps(result))
     elif algorithm == 'segmentation':
-        with open(env_config.output.infer_result_file, 'w') as f:
+        coco_infer_result_file = os.path.join(env_config.output.root_dir, 'coco-infer-result.json')
+        with open(coco_infer_result_file, 'w') as f:
             f.write(json.dumps(infer_result))
     else:
         raise Exception(f'not implement {algorithm} infer result')

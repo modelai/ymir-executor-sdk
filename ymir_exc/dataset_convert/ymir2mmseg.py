@@ -1,85 +1,47 @@
 """
-convert ymir dataset to cityscapes segmentation dataset
+convert ymir dataset to semantic segmentation dataset
 """
 import logging
 import os
 import os.path as osp
+import random
 from typing import Any, Dict, Tuple, Union
 
 import numpy as np
 from easydict import EasyDict as edict
 from PIL import Image
+from pycocotools import coco
+from pycocotools import mask as maskUtils
 from tqdm import tqdm
 
 
-def convert_rgb_to_label_id(
-    rgb_img: Union[Image.Image, np.ndarray, str],
-    palette_dict: Dict[Tuple, int],
-    dtype: Any = np.uint8,
-) -> Union[Image.Image, np.ndarray, str]:
+def find_blank_area_in_dataset(ymir_cfg: edict, max_sample_num: int = 100) -> bool:
     """
-    map rgb color to label id, start from 1
-    for the output mask, note to ignore label 0.
+    check the coco annotation file has blank area or not
     """
-    if isinstance(rgb_img, Image.Image):
-        np_rgb_img = np.array(rgb_img)
+    with open(ymir_cfg.ymir.input.training_index_file, 'r') as fp:
+        lines = fp.readlines()
+    coco_ann_file = lines[0].split()[1]
 
-    if isinstance(rgb_img, str):
-        np_rgb_img = np.array(Image.open(rgb_img))
+    coco_ann = coco.COCO(coco_ann_file)
+    img_ids = coco_ann.getImgIds()
+    sample_img_ids = random.sample(img_ids, min(max_sample_num, len(img_ids)))
+    for img_id in sample_img_ids:
+        ann_ids = coco_ann.getAnnIds(imgIds=[img_id])
+        width = coco_ann.imgs[img_id]['width']
+        height = coco_ann.imgs[img_id]['height']
 
-    height, width = np_rgb_img.shape[0:2]
-    np_label_id = np.ones(shape=(height, width), dtype=dtype) * 255
+        total_mask_area = 0
+        for ann_id in ann_ids:
+            ann = coco_ann.anns[ann_id]
+            mask_area = maskUtils.area(ann['segmentation'])
+            total_mask_area += mask_area
 
-    # rgb = (0,0,0), idx = 0 can skip.
-    for rgb, idx in palette_dict.items():
-        r = np_rgb_img[:, :, 0] == rgb[0]
-        g = np_rgb_img[:, :, 1] == rgb[1]
-        b = np_rgb_img[:, :, 2] == rgb[2]
+        # total_mask_area < width * height means exist background
+        if total_mask_area < width * height:
+            return True
 
-        np_label_id[r & g & b] = idx
-
-    if isinstance(rgb_img, (Image.Image, str)):
-        # mode = L: 8-bit unsigned integer pixels
-        # mode = I: 32-bit signed integer pixels
-        pil_label_id_img = Image.fromarray(
-            np_label_id, mode="L" if dtype == np.uint8 else "I"
-        )
-        return pil_label_id_img
-    elif isinstance(rgb_img, np.ndarray):
-        return np_label_id
-    else:
-        assert False, f"unknown rgb_img format {type(rgb_img)}"
-
-
-def save_rgb_to_label_id(
-    rgb_img: str,
-    label_id_img: str,
-    palette_dict: Dict[Tuple, int],
-    dtype: Any = np.uint8,
-):
-    """
-    map rgb color to label id, start from 1
-    for the output mask, note to ignore label 0.
-    """
-    pil_rgb_img = Image.open(rgb_img)
-    np_rgb_img = np.array(pil_rgb_img)
-    height, width = np_rgb_img.shape[0:2]
-    np_label_id = np.ones(shape=(height, width), dtype=dtype) * 255
-
-    # rgb = (0,0,0), idx = 0 can skip.
-    for rgb, idx in palette_dict.items():
-        r = np_rgb_img[:, :, 0] == rgb[0]
-        g = np_rgb_img[:, :, 1] == rgb[1]
-        b = np_rgb_img[:, :, 2] == rgb[2]
-
-        np_label_id[r & g & b] = idx
-
-    # mode = L: 8-bit unsigned integer pixels
-    # mode = I: 32-bit signed integer pixels
-    pil_label_id_img = Image.fromarray(
-        np_label_id, mode="L" if dtype == np.uint8 else "I"
-    )
-    pil_label_id_img.save(label_id_img)
+    return False
 
 
 def convert_ymir_to_mmseg(ymir_cfg: edict) -> Dict[str, str]:
