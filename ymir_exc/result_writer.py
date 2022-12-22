@@ -73,7 +73,7 @@ def write_model_stage(stage_name: str,
                 tp (int, optional): true positive box count
                 fp (int, optional): false positive box count
                 fn (int, optional): false negative box count
-            semantic segmentation example: {'miou': 0.78}
+            semantic segmentation example: {'mIoU': 0.78}
             instance segmentation example: {'maskAP': 0.6}
         timestamp (int): timestamp (in seconds)
         evaluate_config (dict): configurations used to evaluate this model, which contains:
