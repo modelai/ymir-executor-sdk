@@ -99,12 +99,12 @@ def write_model_stage(stage_name: str,
 
     if 'maskAP' in evaluation_result:
         top1_metric = 'maskAP'
-    elif 'miou' in evaluation_result:
-        top1_metric = 'miou'
+    elif 'mIoU' in evaluation_result:
+        top1_metric = 'mIoU'
     elif 'mAP' in evaluation_result:
-        top1_metric = 'miou'
+        top1_metric = 'mAP'
     else:
-        raise Exception(f'unknown evaluation_result {evaluation_result}, without one of [maskAP, miou, mAP]')
+        raise Exception(f'unknown evaluation_result {evaluation_result}, without one of [maskAP, mIoU, mAP]')
 
     training_result: dict = ({})  # key: stage name, value: stage name, files, timestamp, mAP
 
@@ -133,7 +133,8 @@ def write_model_stage(stage_name: str,
         training_result["best_stage_name"] = sorted_model_stages[-1]["stage_name"]
 
         # history code from ymir/sample_executor, 😢
-        training_result[top1_metric.lower()] = sorted_model_stages[-1][top1_metric]
+        best_top1_metric = top1_metric if top1_metric != 'mAP' else 'map'
+        training_result[best_top1_metric] = sorted_model_stages[-1][top1_metric]
 
         # if too many stages, remove a earlest one
         if len(model_stages) > _MAX_MODEL_STAGES_COUNT_:

@@ -1,11 +1,11 @@
 import json
+import math
 import os
 import shutil
 import unittest
 from typing import Dict, List, Tuple
 
 import yaml
-
 from ymir_exc import result_writer as rw
 from ymir_exc import settings
 
@@ -47,6 +47,7 @@ class TestResultWriter(unittest.TestCase):
     def _prepare_env_config(self) -> None:
         env_obj = {
             "task_id": "task0",
+            "protocol_version": "1.1.0",
             "output": {
                 "root_dir": os.path.join(self._test_root, "out"),
                 "models_dir": os.path.join(self._test_root, "out", "models"),
@@ -64,16 +65,11 @@ class TestResultWriter(unittest.TestCase):
             shutil.rmtree(self._test_root)
 
     # protected: check results
-    def _check_training_result(
-        self, model_names: List[str], mAP: float, class_aps: Dict[str, float], **kwargs
-    ) -> None:
+    def _check_training_result(self, model_names: List[str], mAP: float) -> None:
         with open(self._training_result_file, "r") as f:
             result_obj = yaml.safe_load(f)
-            self.assertEqual(result_obj["model"], model_names)
+            # self.assertEqual(result_obj["model"], model_names)
             self.assertEqual(result_obj["map"], mAP)
-            self.assertEqual(result_obj["class_aps"], class_aps)
-            for k, v in kwargs.items():
-                self.assertEqual(result_obj[k], v)
 
     def _check_mining_result(self, mining_result: List[Tuple[str, float]]) -> None:
         with open(self._mining_result_file, "r") as f:
@@ -93,13 +89,37 @@ class TestResultWriter(unittest.TestCase):
     def test_write_training_result(self) -> None:
         model_names = ["model-symbols.json", "model-0000.params"]
         mAP = 0.86
-        class_aps = {"cat": 0.86, "person": 0.86}
-        rw.write_training_result(
-            model_names=model_names, mAP=mAP, class_aps=class_aps, author="fake author"
-        )  # type: ignore
+        rw.write_training_result(model_names=model_names, mAP=mAP)  # type: ignore
         self._check_training_result(
-            model_names=model_names, mAP=mAP, class_aps=class_aps, author="fake author"
+            model_names=model_names,
+            mAP=mAP,
         )  # type ignore
+
+    def test_write_model_stage(self) -> None:
+        stage_names = ['epoch001', 'epoch002', 'epoch003']
+        files = ['best.pt', 'config.py']
+
+        N = len(stage_names)
+        for metric in ['mAP', 'mIoU', 'maskAP']:
+            # remove training result file
+            if os.path.exists(self._training_result_file):
+                os.system(f'rm {self._training_result_file}')
+
+            for idx, stage_name in enumerate(stage_names):
+                evaluation_result = {metric: idx / len(stage_names)}
+                rw.write_model_stage(stage_name=stage_name, files=files, evaluation_result=evaluation_result)
+
+            with open(self._training_result_file, 'r') as fr:
+                result_obj = yaml.safe_load(fr)
+
+            best_top1_metric = metric if metric != 'mAP' else 'map'
+            self.assertTrue(math.isclose(result_obj[best_top1_metric], (N - 1) / N))
+            self.assertEqual(result_obj['best_stage_name'], stage_names[-1])
+            for stage_name in result_obj['model_stages']:
+                self.assertIn(stage_name, stage_names)
+                m = result_obj['model_stages'][stage_name][metric]
+                n = stage_names.index(stage_name) / N
+                self.assertTrue(math.isclose(m, n))
 
     def test_write_mining_result(self) -> None:
         mining_result = [("a", 0.1), ("b", 0.3), ("c", 0.2)]
