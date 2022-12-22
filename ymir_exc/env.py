@@ -3,7 +3,7 @@
 ## contents of env.yaml
 ```
 task_id: t000000100000166d7761660213748
-protocol_version: 1.0.0
+protocol_version: 2.0.0
 run_training: true
 run_mining: false
 run_infer: false

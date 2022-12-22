@@ -345,7 +345,7 @@ def write_ymir_training_result(
                 tp (int, optional): true positive box count
                 fp (int, optional): false positive box count
                 fn (int, optional): false negative box count
-            semantic segmentation example: {'miou': 0.78, ...}
+            semantic segmentation example: {'mIoU': 0.78, ...}
             instance segmentation example: {'maskAP': 0.6, ...}
     evaluate_config (dict): configurations used to evaluate this model, which contains:
             iou_thr (float): iou threshold
