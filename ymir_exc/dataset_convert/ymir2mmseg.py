@@ -1,24 +1,20 @@
 """
 convert ymir dataset to semantic segmentation dataset
 """
-import logging
 import os
-import os.path as osp
 import random
-from typing import Any, Dict, Tuple, Union
 
-import numpy as np
 from easydict import EasyDict as edict
-from PIL import Image
 from pycocotools import coco
 from pycocotools import mask as maskUtils
-from tqdm import tqdm
+from ymir_exc.util import get_bool
 
 
 def find_blank_area_in_dataset(ymir_cfg: edict, max_sample_num: int = 100) -> bool:
     """
     check the coco annotation file has blank area or not
     """
+
     with open(ymir_cfg.ymir.input.training_index_file, 'r') as fp:
         lines = fp.readlines()
     coco_ann_file = lines[0].split()[1]
@@ -42,3 +38,26 @@ def find_blank_area_in_dataset(ymir_cfg: edict, max_sample_num: int = 100) -> bo
             return True
 
     return False
+
+
+def train_with_black_area_or_not(ymir_cfg: edict, max_sample_num: int = 100) -> bool:
+    if get_bool(ymir_cfg, key='ignore_blank_area', default_value=False):
+        return False
+
+    env_with_blank_area = os.environ.get('WITH_BLANK_AREA', None)
+    if env_with_blank_area:
+        if env_with_blank_area.lower() == 'true':
+            return True
+        elif env_with_blank_area.lower() == 'false':
+            return False
+        else:
+            raise Exception(f'unknown value for WITH_BLANK_AREA = {env_with_blank_area}')
+
+    # set environment variable to keep consistency
+    with_blank_area = find_blank_area_in_dataset(ymir_cfg, max_sample_num)
+    if with_blank_area:
+        os.environ.setdefault('WITH_BLANK_AREA', 'TRUE')
+    else:
+        os.environ.setdefault('WITH_BLANK_AREA', 'FALSE')
+
+    return with_blank_area

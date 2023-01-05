@@ -66,15 +66,18 @@ def write_model_stage(stage_name: str,
             All files should under directory: `/out/models`
         mAP (float): mean average precision of this stage, depracated
         evaluation_result (Dict[str, Union[float, int]]):
-            detection example: `{'mAP': 0.65}`
-            evaluation result of this stage, it contains:
-                mAP (float, required): mean average precision
-                mAR (float, optional): mean average recall
-                tp (int, optional): true positive box count
-                fp (int, optional): false positive box count
-                fn (int, optional): false negative box count
-            semantic segmentation example: {'mIoU': 0.78}
-            instance segmentation example: {'maskAP': 0.6}
+            detection example: `{'mAP': 0.65, 'mAR': 0.8, tp: 10, fp: 1, fn: 1}`
+            semantic segmentation example: {'mIoU': 0.78, 'mAcc': 0.8, tp: 10, fp: 1, fn: 1}
+            instance segmentation example: {'maskAP': 0.6, 'boxAP': 0.8, tp: 10, fp: 1, fn: 1}
+            mAP (float, required for object detection): mean average precision
+            mIoU (float, required for semantic segmentation): mean intersection over union
+            maskAP (float, required for instance segmentation): mask average precision
+            mAR (float, optional for object detection): mean average recall
+            mAcc (float, optional for semantic segmentation): mean accuracy
+            boxAP (float, optional for instance segmentation): box average precision
+            tp (int, optional): true positive box count
+            fp (int, optional): false positive box count
+            fn (int, optional): false negative box count
         timestamp (int): timestamp (in seconds)
         evaluate_config (dict): configurations used to evaluate this model, which contains:
             iou_thr (float): iou threshold
