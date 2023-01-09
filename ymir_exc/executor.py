@@ -1,20 +1,17 @@
 import logging
 import subprocess
 import sys
+from typing import Optional
 
 from easydict import EasyDict as edict
 
 from ymir_exc import monitor
-from ymir_exc.util import (
-    YmirStage,
-    get_bool,
-    get_merged_config,
-    write_ymir_monitor_process,
-)
+from ymir_exc.util import (YmirStage, get_bool, get_merged_config, write_ymir_monitor_process)
 
 
 class Executor(object):
-    def __init__(self, apps: dict = None):
+
+    def __init__(self, apps: Optional[dict] = None):
         self.apps = apps or dict(
             training="python3 ymir/ymir_training.py",
             mining="python3 ymir/ymir_mining.py",
