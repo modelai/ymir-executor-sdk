@@ -280,6 +280,9 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
 )
 def filter_saved_files(cfg: edict, files: List[str]):
     """
+    use root_dir = cfg.ymir.output.models_dir
+    note: not support root_dir = osp.join(cfg.ymir.output.models_dir, stage_name)
+
     if files == []:
         if ymir_saved_file_patterns:
             return "filterd files in cfg.ymir.output.models_dir"
@@ -322,6 +325,27 @@ def filter_saved_files(cfg: edict, files: List[str]):
         return files
 
 
+@versionadded(version="2.0.2", reason="check saved files")
+def check_saved_files(cfg: edict, files: List[str]):
+    """
+    check file path and soft link file
+
+    use root_dir = cfg.ymir.output.models_dir
+    note: not support root_dir = osp.join(cfg.ymir.output.models_dir, stage_name)
+    """
+    root_dir = cfg.ymir.output.models_dir
+    for f in files:
+        if osp.islink(f):
+            raise Exception(f'not support save link file {f}')
+
+        if osp.isabs(f):
+            assert osp.dirname(f) == root_dir, f'saved file {f} not in {root_dir}'
+        else:
+            assert osp.exists(osp.join(root_dir, f)), f'saved file {f} not found in {root_dir}'
+            assert osp.basename(
+                f) == f, f'saved file {f} not in {root_dir} directly, but in child directory of {root_dir}'
+
+
 @versionchanged(
     version="2.0.0",
     reason="add support for segmentation",
@@ -357,6 +381,7 @@ def write_ymir_training_result(
         directory: `/out/models`
     """
     files = filter_saved_files(cfg, files)
+    check_saved_files(cfg, files)
 
     if files:
         if rw.multiple_model_stages_supportable():

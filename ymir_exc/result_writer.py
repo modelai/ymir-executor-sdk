@@ -62,8 +62,8 @@ def write_model_stage(stage_name: str,
     Write model stage and model attachments
     Args:
         stage_name (str): name to this model stage
-        files (List[str]): model file names for this stage
-            All files should under directory: `/out/models`
+        files (List[str]): model file basename names for this stage
+            All files should under directory: `/out/models` or `/out/models/stage_name`
         mAP (float): mean average precision of this stage, depracated
         evaluation_result (Dict[str, Union[float, int]]):
             detection example: `{'mAP': 0.65, 'mAR': 0.8, tp: 10, fp: 1, fn: 1}`
