@@ -4,15 +4,8 @@ import random
 
 import yaml
 from easydict import EasyDict as edict
-
 from ymir_exc import result_writer
-from ymir_exc.util import (
-    YmirStage,
-    YmirStageWeight,
-    get_bool,
-    get_ymir_process,
-    write_ymir_training_result,
-)
+from ymir_exc.util import (YmirStage, YmirStageWeight, get_bool, get_ymir_process, write_ymir_training_result)
 
 
 def test_get_ymir_process():
@@ -89,12 +82,22 @@ def test_write_ymir_traing_result():
     cfg.ymir.output.training_result_file = "/tmp/out/models/result.yaml"
 
     os.makedirs(cfg.ymir.output.models_dir, exist_ok=True)
+    env_config_file = '/tmp/in/env.yaml'
+    os.makedirs(os.path.dirname(env_config_file), exist_ok=True)
+    os.environ.setdefault('DEFAULT_ENV_FILE_PATH', env_config_file)
+    with open(env_config_file, 'w') as fw:
+        dump_dict = dict(cfg.ymir)
+        dump_dict['output'] = dict(dump_dict['output'])
+        yaml.safe_dump(dump_dict, fw)
 
     for i in range(3):
         files = [f"checkpoint_{i}.pth", "config_{i}.json"]
         map50 = random.random()
         id = f"epoch_{i}"
 
+        for f in files:
+            with open(os.path.join(cfg.ymir.models_dir, f), 'w') as fw:
+                fw.write(f'{f}\n')
         write_ymir_training_result(cfg, map50=map50, files=files, id=id)
         check_training_result(cfg)
 
