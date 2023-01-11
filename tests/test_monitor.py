@@ -14,15 +14,9 @@ class TestMonitor(unittest.TestCase):
         self._test_root = os.path.join("/tmp", "test_tmi", *self.id().split(".")[-3:])
         self._custom_env_file = os.path.join(self._test_root, "in", "env.yml")
         self._custom_config_file = os.path.join(self._test_root, "in", 'config.yaml')
-        self._training_result_file = os.path.join(
-            self._test_root, "out", "training-result.yaml"
-        )
-        self._mining_result_file = os.path.join(
-            self._test_root, "out", "mining-result.tsv"
-        )
-        self._infer_result_file = os.path.join(
-            self._test_root, "out", "infer-result.json"
-        )
+        self._training_result_file = os.path.join(self._test_root, "out", "training-result.yaml")
+        self._mining_result_file = os.path.join(self._test_root, "out", "mining-result.tsv")
+        self._infer_result_file = os.path.join(self._test_root, "out", "infer-result.json")
         self._monitor_file = os.path.join(self._test_root, "out", "monitor.txt")
 
     def setUp(self) -> None:

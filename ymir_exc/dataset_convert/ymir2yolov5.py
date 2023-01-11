@@ -1,7 +1,7 @@
 import os
 import os.path as osp
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import imagesize
 import yaml
@@ -76,7 +76,7 @@ def convert(cfg: edict, out_dir: str, asset: str, ann: str) -> Tuple[str, str]:
     return img, txt
 
 
-def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None) -> str:
+def convert_ymir_to_yolov5(cfg: edict, out_dir: Optional[str] = None) -> str:
     """
     convert ymir format dataset to yolov5 format
     generate data.yaml for training/mining/infer
@@ -102,12 +102,8 @@ def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None) -> str:
     out_dir = out_dir or cfg.ymir.output.root_dir
     if cfg.ymir.run_training:
         Path(osp.join(out_dir, "images")).symlink_to(cfg.ymir.input.assets_dir)
-    data = dict(
-        path=out_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names
-    )
-    for split, prefix in zip(
-        ["train", "val", "test"], ["training", "val", "candidate"]
-    ):
+    data = dict(path=out_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names)
+    for split, prefix in zip(["train", "val", "test"], ["training", "val", "candidate"]):
         src_file = getattr(cfg.ymir.input, f"{prefix}_index_file")
         if osp.exists(src_file) and split in ["train", "val"]:
             with open(src_file, "r") as fp:

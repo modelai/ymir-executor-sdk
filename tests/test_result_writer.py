@@ -16,15 +16,9 @@ class TestResultWriter(unittest.TestCase):
         super().__init__(methodName)
         self._test_root = os.path.join("/tmp", "test_tmi", *self.id().split(".")[-3:])
         self._custom_env_file = os.path.join(self._test_root, "env.yml")
-        self._training_result_file = os.path.join(
-            self._test_root, "out", "training-result.yaml"
-        )
-        self._mining_result_file = os.path.join(
-            self._test_root, "out", "mining-result.tsv"
-        )
-        self._infer_result_file = os.path.join(
-            self._test_root, "out", "infer-result.json"
-        )
+        self._training_result_file = os.path.join(self._test_root, "out", "training-result.yaml")
+        self._mining_result_file = os.path.join(self._test_root, "out", "mining-result.tsv")
+        self._infer_result_file = os.path.join(self._test_root, "out", "infer-result.json")
         self._coco_infer_result_file = os.path.join(self._test_root, "out", 'coco-infer-result.json')
         self._monitor_file = os.path.join(self._test_root, "out", "monitor.txt")
 
@@ -83,9 +77,7 @@ class TestResultWriter(unittest.TestCase):
     def _check_infer_result(self, infer_result: Dict[str, List[rw.Annotation]]) -> None:
         with open(self._infer_result_file, "r") as f:
             infer_result_obj = json.loads(f.read())
-            self.assertEqual(
-                set(infer_result_obj["detection"].keys()), set(infer_result.keys())
-            )
+            self.assertEqual(set(infer_result_obj["detection"].keys()), set(infer_result.keys()))
 
     def test_write_training_result(self) -> None:
         model_names = ["model-symbols.json", "model-0000.params"]
@@ -130,18 +122,10 @@ class TestResultWriter(unittest.TestCase):
     def test_write_infer_result(self) -> None:
         infer_result = {
             "a": [
-                rw.Annotation(
-                    box=rw.Box(x=0, y=0, w=50, h=50), class_name="cat", score=0.2
-                ),
-                rw.Annotation(
-                    box=rw.Box(x=150, y=0, w=50, h=50), class_name="person", score=0.3
-                ),
+                rw.Annotation(box=rw.Box(x=0, y=0, w=50, h=50), class_name="cat", score=0.2),
+                rw.Annotation(box=rw.Box(x=150, y=0, w=50, h=50), class_name="person", score=0.3),
             ],
-            "b": [
-                rw.Annotation(
-                    box=rw.Box(x=0, y=0, w=50, h=150), class_name="person", score=0.2
-                )
-            ],
+            "b": [rw.Annotation(box=rw.Box(x=0, y=0, w=50, h=150), class_name="person", score=0.2)],
             "c": [],
         }
         rw.write_infer_result(infer_result=infer_result)  # type: ignore
@@ -153,6 +137,4 @@ class TestResultWriter(unittest.TestCase):
 
         with open(self._coco_infer_result_file, "r") as f:
             infer_result_obj = json.loads(f.read())
-            self.assertEqual(
-                set(infer_result_obj.keys()), set(infer_result.keys())
-            )
+            self.assertEqual(set(infer_result_obj.keys()), set(infer_result.keys()))

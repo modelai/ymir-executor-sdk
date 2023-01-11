@@ -99,23 +99,15 @@ def main():
 
         basename = line_splits[0]
 
-        src_img_file = osp.join(
-            args.root_dir, voc_year, "JPEGImages", basename + ".jpg"
-        )
-        des_img_file = osp.join(
-            args.out_dir, voc_year, des_dataset_name, "images", basename + ".jpg"
-        )
+        src_img_file = osp.join(args.root_dir, voc_year, "JPEGImages", basename + ".jpg")
+        des_img_file = osp.join(args.out_dir, voc_year, des_dataset_name, "images", basename + ".jpg")
         if osp.exists(src_img_file) and not osp.exists(des_img_file):
             shutil.copy(src_img_file, des_img_file)
         else:
             print(f"not found {src_img_file} or exist {des_img_file}")
 
-        src_xml_file = osp.join(
-            args.root_dir, voc_year, "Annotations", basename + ".xml"
-        )
-        des_xml_file = osp.join(
-            args.out_dir, voc_year, des_dataset_name, ann_folder_name, basename + ".xml"
-        )
+        src_xml_file = osp.join(args.root_dir, voc_year, "Annotations", basename + ".xml")
+        des_xml_file = osp.join(args.out_dir, voc_year, des_dataset_name, ann_folder_name, basename + ".xml")
         if osp.exists(src_xml_file) and not osp.exists(des_xml_file):
             shutil.copy(src_xml_file, des_xml_file)
         else:
