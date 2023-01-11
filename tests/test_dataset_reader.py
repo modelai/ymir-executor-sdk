@@ -3,7 +3,6 @@ import shutil
 import unittest
 
 import yaml
-
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, settings
 
@@ -84,3 +83,7 @@ class TestDatasetReader(unittest.TestCase):
             dr.item_paths(dataset_type=env.DatasetType.CANDIDATE)
         except Exception as e:
             self.assertTrue(isinstance(e, ValueError))
+
+    def test_items_count(self) -> None:
+        N = dr.items_count(env.DatasetType.TRAINING)
+        self.assertEqual(N, 3)

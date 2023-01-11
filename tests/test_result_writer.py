@@ -25,6 +25,7 @@ class TestResultWriter(unittest.TestCase):
         self._infer_result_file = os.path.join(
             self._test_root, "out", "infer-result.json"
         )
+        self._coco_infer_result_file = os.path.join(self._test_root, "out", 'coco-infer-result.json')
         self._monitor_file = os.path.join(self._test_root, "out", "monitor.txt")
 
     def setUp(self) -> None:
@@ -47,7 +48,7 @@ class TestResultWriter(unittest.TestCase):
     def _prepare_env_config(self) -> None:
         env_obj = {
             "task_id": "task0",
-            "protocol_version": "1.1.0",
+            "protocol_version": "2.0.0",
             "output": {
                 "root_dir": os.path.join(self._test_root, "out"),
                 "models_dir": os.path.join(self._test_root, "out", "models"),
@@ -145,3 +146,13 @@ class TestResultWriter(unittest.TestCase):
         }
         rw.write_infer_result(infer_result=infer_result)  # type: ignore
         self._check_infer_result(infer_result=infer_result)  # type: ignore
+
+    def test_write_segmentation_infer_result(self) -> None:
+        infer_result = {'result': 'fake infer result'}
+        rw.write_infer_result(infer_result=infer_result, algorithm='segmentation')
+
+        with open(self._coco_infer_result_file, "r") as f:
+            infer_result_obj = json.loads(f.read())
+            self.assertEqual(
+                set(infer_result_obj.keys()), set(infer_result.keys())
+            )

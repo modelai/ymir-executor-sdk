@@ -139,6 +139,9 @@ def write_model_stage(stage_name: str,
         best_top1_metric = top1_metric if top1_metric != 'mAP' else 'map'
         training_result[best_top1_metric] = sorted_model_stages[-1][top1_metric]
 
+        # ymir2.0.2 support semantic/instance segmentaiton
+        training_result['object_type'] = env.get_manifest_object_type()
+
         # if too many stages, remove a earlest one
         if len(model_stages) > _MAX_MODEL_STAGES_COUNT_:
             sorted_model_stages = sorted(model_stages.values(), key=lambda x: x.get("timestamp", 0))
@@ -205,7 +208,8 @@ def write_mining_result(mining_result: List[Tuple[str, float]]) -> None:
 )
 def write_infer_result(infer_result: Dict, algorithm: Optional[str] = 'detection') -> None:
     """
-    write detection infer result
+    supported_algorithms = ['classification', 'detection', 'segmentation']
+    for detection infer result, use ymir format
     for segmentation infer result, write coco-format to infer_result_file directly
     """
     env_config = env.get_current_env()

@@ -1,6 +1,6 @@
 import time
 from enum import IntEnum
-from typing import Union
+from typing import Optional, Union
 
 from easydict import EasyDict as edict
 from tensorboardX import SummaryWriter
@@ -52,7 +52,7 @@ def write_monitor_logger_for_multiple_tasks(
         write_monitor_logger(percent=percent)
 
 
-def write_tensorboard_text(text: str, tag: str = None) -> None:
+def write_tensorboard_text(text: str, tag: Optional[str] = None) -> None:
     """
     donot call this function too often, tensorboard may
     overwrite history log text with the same `tag` and `global_step`
@@ -66,7 +66,7 @@ def write_tensorboard_text(text: str, tag: str = None) -> None:
         f.add_text(tag=tag, text_string=text, global_step=round(time.time() * 1000))
 
 
-def write_final_executor_log(tag: str = None) -> None:
+def write_final_executor_log(tag: Optional[str] = None) -> None:
     env_config = env.get_current_env()
     exe_log_file = env_config.output.executor_log_file
     with open(exe_log_file) as f:

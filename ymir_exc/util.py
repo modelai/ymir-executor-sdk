@@ -226,7 +226,7 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
 def get_weight_files(cfg: edict, suffix: Tuple[str, ...] = (".pt", ".pth")) -> List[str]:
     """
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path with `suffix`
-    return the weight file list
+    return the weight file absolute path list
     """
     if cfg.ymir.run_training:
         model_params_path = cfg.param.get("pretrained_model_params", [])
@@ -282,6 +282,9 @@ def filter_saved_files(cfg: edict, files: List[str]):
     """
     use root_dir = cfg.ymir.output.models_dir
     note: not support root_dir = osp.join(cfg.ymir.output.models_dir, stage_name)
+    ymir_saved_file_patterns: support re.search(pattern)
+        format: <pattern>, <pattern>, <pattern>
+        eg: .*.pth, .*.txt, .*.py will filter files with suffix .pth, .txt and .py
 
     if files == []:
         if ymir_saved_file_patterns:
