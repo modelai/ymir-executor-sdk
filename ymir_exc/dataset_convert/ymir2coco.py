@@ -4,13 +4,12 @@ import os.path as osp
 from typing import Dict, List
 
 import imagesize
-
 from ymir_exc.util import get_merged_config
 
 
 def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, str]]:
     """
-    convert ymir dataset to coco format for training task
+    convert ymir detection dataset to coco format for training task
     for the input index file:
         ymir_index_file: for each line it likes: {img_path} \t {ann_path}
 
@@ -22,11 +21,26 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
             val=dict(img_dir=xxx, ann_file=xxx))
     """
     cfg = get_merged_config()
+    export_format = cfg.param.export_format
+    assert export_format in ['ark:raw',
+                             'det-ark:raw'], f'unsupported export_format = {export_format}, not ark:raw or det-ark:raw'
+
     out_dir = cfg.ymir.output.root_dir
     ymir_dataset_dir = osp.join(out_dir, "ymir_dataset")
-    os.makedirs(ymir_dataset_dir, exist_ok=True)
 
     output_info = {}
+    # avoid convert multiple times
+    if osp.exists(ymir_dataset_dir):
+        for split in ['train', 'val']:
+            split_json_file = osp.join(ymir_dataset_dir, f"ymir_{split}.json")
+            output_info[split] = dict(img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file)
+        return output_info
+
+    # avoid convert in other rank
+    RANK = int(os.getenv('RANK', -1))
+    assert RANK in [0, -1], f'convert dataset in rank = {RANK}, not 0 or -1'
+    os.makedirs(ymir_dataset_dir, exist_ok=True)
+
     for split, prefix in zip(["train", "val"], ["training", "val"]):
         ymir_index_file = getattr(cfg.ymir.input, f"{prefix}_index_file")
         with open(ymir_index_file) as fp:

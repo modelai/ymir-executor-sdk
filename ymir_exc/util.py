@@ -1,5 +1,4 @@
 import glob
-import json
 import math
 import os
 import os.path as osp
@@ -9,7 +8,6 @@ import warnings
 from enum import IntEnum
 from typing import Dict, List, Optional, Tuple, Union
 
-import imagesize
 import yaml
 from deprecated.sphinx import deprecated, versionadded, versionchanged
 from easydict import EasyDict as edict
@@ -151,78 +149,6 @@ def get_merged_config() -> edict:
     return merged_cfg
 
 
-def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, str]]:
-    """
-    convert ymir detection dataset to coco format for training task
-    for the input index file:
-        ymir_index_file: for each line it likes: {img_path} \t {ann_path}
-
-    for the outout json file:
-        cat_id_from_zero: category id start from zero or not
-
-    output the coco dataset information:
-        dict(train=dict(img_dir=xxx, ann_file=xxx),
-            val=dict(img_dir=xxx, ann_file=xxx))
-    """
-    cfg = get_merged_config()
-    out_dir = cfg.ymir.output.root_dir
-    ymir_dataset_dir = osp.join(out_dir, "ymir_dataset")
-    os.makedirs(ymir_dataset_dir, exist_ok=True)
-
-    output_info = {}
-    for split, prefix in zip(["train", "val"], ["training", "val"]):
-        ymir_index_file = getattr(cfg.ymir.input, f"{prefix}_index_file")
-        with open(ymir_index_file) as fp:
-            lines = fp.readlines()
-
-        img_id = 0
-        ann_id = 0
-        data: Dict[str, List] = dict(images=[], annotations=[], categories=[], licenses=[])
-
-        cat_id_start = 0 if cat_id_from_zero else 1
-        for id, name in enumerate(cfg.param.class_names):
-            data["categories"].append(dict(id=id + cat_id_start, name=name, supercategory="none"))
-
-        for line in lines:
-            img_file, ann_file = line.strip().split()
-            width, height = imagesize.get(img_file)
-            img_info = dict(file_name=img_file, height=height, width=width, id=img_id)
-
-            data["images"].append(img_info)
-
-            if osp.exists(ann_file):
-                for ann_line in open(ann_file, "r").readlines():
-                    ann_strlist = ann_line.strip().split(",")
-                    class_id, x1, y1, x2, y2 = [int(s) for s in ann_strlist[0:5]]
-                    bbox_width = x2 - x1
-                    bbox_height = y2 - y1
-                    bbox_area = bbox_width * bbox_height
-                    bbox_quality = (float(ann_strlist[5]) if len(ann_strlist) > 5 and ann_strlist[5].isnumeric() else 1)
-                    ann_info = dict(
-                        bbox=[x1, y1, bbox_width, bbox_height],  # x,y,width,height
-                        area=bbox_area,
-                        score=1.0,
-                        bbox_quality=bbox_quality,
-                        iscrowd=0,
-                        segmentation=[[x1, y1, x1, y2, x2, y2, x2, y1]],
-                        category_id=class_id + cat_id_start,  # start from cat_id_start
-                        id=ann_id,
-                        image_id=img_id,
-                    )
-                    data["annotations"].append(ann_info)
-                    ann_id += 1
-
-            img_id += 1
-
-        split_json_file = osp.join(ymir_dataset_dir, f"ymir_{split}.json")
-        with open(split_json_file, "w") as fw:
-            json.dump(data, fw)
-
-        output_info[split] = dict(img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file)
-
-    return output_info
-
-
 def get_weight_files(cfg: edict, suffix: Tuple[str, ...] = (".pt", ".pth")) -> List[str]:
     """
     find weight file in cfg.param.model_params_path or cfg.param.model_params_path with `suffix`
@@ -281,7 +207,6 @@ def get_bool(cfg: edict, key: str, default_value: bool = True) -> bool:
 def filter_saved_files(cfg: edict, files: List[str]):
     """
     use root_dir = cfg.ymir.output.models_dir
-    note: not support root_dir = osp.join(cfg.ymir.output.models_dir, stage_name)
     ymir_saved_file_patterns: support re.search(pattern)
         format: <pattern>, <pattern>, <pattern>
         eg: .*.pth, .*.txt, .*.py will filter files with suffix .pth, .txt and .py
@@ -328,25 +253,47 @@ def filter_saved_files(cfg: edict, files: List[str]):
         return files
 
 
-@versionadded(version="2.0.2", reason="check saved files")
-def check_saved_files(cfg: edict, files: List[str]):
+@versionadded(version="2.0.2", reason="format saved files")
+def format_saved_files(cfg: edict, files: List[str]) -> List[str]:
     """
-    check file path and soft link file
+    format file path and soft link file
 
     use root_dir = cfg.ymir.output.models_dir
-    note: not support root_dir = osp.join(cfg.ymir.output.models_dir, stage_name)
+
+    return basename with rel file
     """
     root_dir = cfg.ymir.output.models_dir
+
+    fine_files = []
     for f in files:
         if osp.islink(f):
-            raise Exception(f'not support save link file {f}')
+            rel_path = os.path.realpath(f)
+            assert osp.exists(rel_path), f'saved link {f} --> {rel_path} not exist'
+
+            f = rel_path
 
         if osp.isabs(f):
-            assert osp.dirname(f) == root_dir, f'saved file {f} not in {root_dir}'
+            if osp.dirname(f) != root_dir:
+                des_f = osp.join(root_dir, osp.basename(f))
+
+                if osp.exists(des_f):
+                    warnings.warn(f'copy {f} to {des_f}, overwrite it')
+
+                os.system(f'cp {f} {des_f}')
         else:
             assert osp.exists(osp.join(root_dir, f)), f'saved file {f} not found in {root_dir}'
-            assert osp.basename(
-                f) == f, f'saved file {f} not in {root_dir} directly, but in child directory of {root_dir}'
+
+            if osp.basename(f) != f:
+                src_f = osp.join(root_dir, f)
+                des_f = osp.join(root_dir, osp.basename(f))
+                if osp.exists(des_f):
+                    warnings.warn(f'copy {src_f} to {des_f}, overwrite it')
+
+                os.system(f'cp {src_f} {des_f}')
+
+        fine_files.append(osp.basename(f))
+
+    return fine_files
 
 
 @versionchanged(
@@ -365,18 +312,28 @@ def write_ymir_training_result(
     """write training result to disk for ymir
     cfg: ymir merged config, view get_merged_config()
     evaluation_result (Dict[str, Union[float, int]]):
-            detection example: `{'mAP': 0.65, ...}`
-            evaluation result of this stage, it contains:
-                mAP (float, required): mean average precision
-                mAR (float, optional): mean average recall
-                tp (int, optional): true positive box count
-                fp (int, optional): false positive box count
-                fn (int, optional): false negative box count
-            semantic segmentation example: {'mIoU': 0.78, ...}
-            instance segmentation example: {'maskAP': 0.6, ...}
+        detection example: `{'mAP': 0.65, tp: 10, ...}`
+        evaluation result of this stage, it contains:
+            mAP (float, required): mean average precision
+            mAR (float, optional): mean average recall
+            tp (int, optional): true positive box count
+            fp (int, optional): false positive box count
+            fn (int, optional): false negative box count
+        semantic segmentation example: {'mIoU': 0.78, mAcc: 0.8, ...}
+            mIoU (float, required): mean intersection over union
+            mAcc (float, optional): mean accuracy
+            tp (int, optional): true positive pixel count (area)
+            fp (int, optional): false positive pixel count (area)
+            fn (int, optional): false negative pixel count (area)
+        instance segmentation example: {'maskAP': 0.6, boxAP: 0.7, ...}
+            maskAP (float, required): mask average precision
+            boxAP (float, optional): bounding box average precision
+            tp (int, optional): true positive box count
+            fp (int, optional): false positive box count
+            fn (int, optional): false negative box count
     evaluate_config (dict): configurations used to evaluate this model, which contains:
-            iou_thr (float): iou threshold
-            conf_thr (float): confidence threshold
+        iou_thr (float): iou threshold
+        conf_thr (float): confidence threshold
     map50: evaluation result, depracated
     files: weight and related files to save, [] means save all files in /out/models
     id: weight name to distinguish models from different epoch/step
@@ -384,7 +341,7 @@ def write_ymir_training_result(
         directory: `/out/models`
     """
     files = filter_saved_files(cfg, files)
-    check_saved_files(cfg, files)
+    files = format_saved_files(cfg, files)
 
     if files:
         if rw.multiple_model_stages_supportable():
