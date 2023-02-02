@@ -206,7 +206,8 @@ def write_mining_result(mining_result: List[Tuple[str, float]]) -> None:
     version="2.0.0",
     reason="support detection and segmentation infer result",
 )
-def write_infer_result(infer_result: Dict, algorithm: Optional[str] = 'detection') -> None:
+def write_infer_result(infer_result: Union[Dict, Dict[str, List[Annotation]]],
+                       algorithm: Optional[str] = 'detection') -> None:
     """
     supported_algorithms = ['classification', 'detection', 'segmentation']
     for detection infer result, use ymir format
