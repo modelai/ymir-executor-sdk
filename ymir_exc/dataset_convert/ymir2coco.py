@@ -15,6 +15,8 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
 
     for the outout json file:
         cat_id_from_zero: category id start from zero or not
+        for openmmlab: cat_id_from_zero = True
+        for detectron2: cat_id_from_zero = False
 
     output the coco dataset information:
         dict(train=dict(img_dir=xxx, ann_file=xxx),

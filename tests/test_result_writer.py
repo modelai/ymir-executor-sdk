@@ -19,7 +19,6 @@ class TestResultWriter(unittest.TestCase):
         self._training_result_file = os.path.join(self._test_root, "out", "training-result.yaml")
         self._mining_result_file = os.path.join(self._test_root, "out", "mining-result.tsv")
         self._infer_result_file = os.path.join(self._test_root, "out", "infer-result.json")
-        self._coco_infer_result_file = os.path.join(self._test_root, "out", 'coco-infer-result.json')
         self._monitor_file = os.path.join(self._test_root, "out", "monitor.txt")
 
     def setUp(self) -> None:
@@ -135,6 +134,6 @@ class TestResultWriter(unittest.TestCase):
         infer_result = {'result': 'fake infer result'}
         rw.write_infer_result(infer_result=infer_result, algorithm='segmentation')
 
-        with open(self._coco_infer_result_file, "r") as f:
+        with open(self._infer_result_file, "r") as f:
             infer_result_obj = json.loads(f.read())
             self.assertEqual(set(infer_result_obj.keys()), set(infer_result.keys()))
