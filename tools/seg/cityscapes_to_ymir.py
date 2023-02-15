@@ -98,14 +98,12 @@ def main():
 
     os.makedirs(osp.join(args.out_dir, args.split, img_folder_name), exist_ok=True)
     os.makedirs(osp.join(args.out_dir, args.split, ann_folder_name), exist_ok=True)
-    src_img_files = glob.glob(
-        osp.join(args.root_dir, "leftImg8bit", args.split, "*", "*.png")
-    )
+    src_img_files = glob.glob(osp.join(args.root_dir, "leftImg8bit", args.split, "*", "*.png"))
 
     random.seed(25)
     if args.num > 0:
         random.shuffle(src_img_files)
-        src_img_files = src_img_files[0 : args.num]
+        src_img_files = src_img_files[0:args.num]
 
     des_img_files = []
     for src_img in tqdm(src_img_files):
@@ -126,12 +124,8 @@ def main():
         label_file = convert_json_to_label(ann_json)
 
         # make ymir image and annotation with the same filename
-        des_img = osp.join(
-            args.out_dir, args.split, img_folder_name, Path(src_img).name
-        )
-        des_ann = osp.join(
-            args.out_dir, args.split, ann_folder_name, Path(src_img).name
-        )
+        des_img = osp.join(args.out_dir, args.split, img_folder_name, Path(src_img).name)
+        des_ann = osp.join(args.out_dir, args.split, ann_folder_name, Path(src_img).name)
         shutil.copy(src_img, des_img)
         shutil.copy(label_file, des_ann)
         des_img_files.append(des_img)

@@ -14,6 +14,7 @@ from ymir_exc.util import (
 
 
 class Executor(object):
+
     def __init__(self, apps: dict = None):
         self.apps = apps or dict(
             training="python3 ymir/ymir_training.py",
@@ -61,16 +62,12 @@ class Executor(object):
         command = self.apps["mining"]
         logging.info(f"start mining: {command}")
         subprocess.run(command.split(), check=True)
-        write_ymir_monitor_process(
-            cfg, task="mining", naive_stage_percent=1, stage=YmirStage.POSTPROCESS
-        )
+        write_ymir_monitor_process(cfg, task="mining", naive_stage_percent=1, stage=YmirStage.POSTPROCESS)
         logging.info("mining finished")
 
     def _run_infer(self, cfg: edict) -> None:
         command = self.apps["infer"]
         logging.info(f"start infer: {command}")
         subprocess.run(command.split(), check=True)
-        write_ymir_monitor_process(
-            cfg, task="infer", naive_stage_percent=1, stage=YmirStage.POSTPROCESS
-        )
+        write_ymir_monitor_process(cfg, task="infer", naive_stage_percent=1, stage=YmirStage.POSTPROCESS)
         logging.info("infer finished")

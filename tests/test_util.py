@@ -7,9 +7,8 @@ import unittest
 import yaml
 from easydict import EasyDict as edict
 from ymir_exc import result_writer, settings
-from ymir_exc.util import (YmirStage, YmirStageWeight, filter_saved_files,
-                           get_bool, get_merged_config, get_weight_files,
-                           get_ymir_process, write_ymir_training_result)
+from ymir_exc.util import (YmirStage, YmirStageWeight, filter_saved_files, get_bool, get_merged_config,
+                           get_weight_files, get_ymir_process, write_ymir_training_result)
 
 
 def test_get_ymir_process():
@@ -19,7 +18,7 @@ def test_get_ymir_process():
     for stage, stage_init, stage_weight in zip(
         [YmirStage.PREPROCESS, YmirStage.TASK, YmirStage.POSTPROCESS],
         [0, w0, w0 + w1],
-        weights.weights,
+            weights.weights,
     ):
         for _ in range(5):
             p = random.random()
@@ -30,7 +29,7 @@ def test_get_ymir_process():
     for stage, stage_init, stage_weight in zip(
         [YmirStage.PREPROCESS, YmirStage.TASK, YmirStage.POSTPROCESS],
         [0, w0, w0 + w1],
-        weights.weights,
+            weights.weights,
     ):
         for _ in range(5):
             p = random.random()

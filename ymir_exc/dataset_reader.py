@@ -5,9 +5,7 @@ from PIL import Image
 from ymir_exc import env
 
 
-def _index_file_for_dataset_type(
-    env_config: env.EnvConfig, dataset_type: env.DatasetType
-) -> str:
+def _index_file_for_dataset_type(env_config: env.EnvConfig, dataset_type: env.DatasetType) -> str:
     mapping = {
         env.DatasetType.TRAINING: env_config.input.training_index_file,
         env.DatasetType.VALIDATION: env_config.input.val_index_file,

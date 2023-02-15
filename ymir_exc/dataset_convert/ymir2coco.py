@@ -34,15 +34,11 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
 
         img_id = 0
         ann_id = 0
-        data: Dict[str, List] = dict(
-            images=[], annotations=[], categories=[], licenses=[]
-        )
+        data: Dict[str, List] = dict(images=[], annotations=[], categories=[], licenses=[])
 
         cat_id_start = 0 if cat_id_from_zero else 1
         for id, name in enumerate(cfg.param.class_names):
-            data["categories"].append(
-                dict(id=id + cat_id_start, name=name, supercategory="none")
-            )
+            data["categories"].append(dict(id=id + cat_id_start, name=name, supercategory="none"))
 
         for line in lines:
             img_file, ann_file = line.strip().split()
@@ -58,11 +54,7 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
                     bbox_width = x2 - x1
                     bbox_height = y2 - y1
                     bbox_area = bbox_width * bbox_height
-                    bbox_quality = (
-                        float(ann_strlist[5])
-                        if len(ann_strlist) > 5 and ann_strlist[5].isnumeric()
-                        else 1
-                    )
+                    bbox_quality = (float(ann_strlist[5]) if len(ann_strlist) > 5 and ann_strlist[5].isnumeric() else 1)
                     ann_info = dict(
                         bbox=[x1, y1, bbox_width, bbox_height],  # x,y,width,height
                         area=bbox_area,
@@ -83,8 +75,6 @@ def convert_ymir_to_coco(cat_id_from_zero: bool = False) -> Dict[str, Dict[str, 
         with open(split_json_file, "w") as fw:
             json.dump(data, fw)
 
-        output_info[split] = dict(
-            img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file
-        )
+        output_info[split] = dict(img_dir=cfg.ymir.input.assets_dir, ann_file=split_json_file)
 
     return output_info

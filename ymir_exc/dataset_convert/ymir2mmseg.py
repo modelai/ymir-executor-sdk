@@ -41,9 +41,7 @@ def convert_rgb_to_label_id(
     if isinstance(rgb_img, (Image.Image, str)):
         # mode = L: 8-bit unsigned integer pixels
         # mode = I: 32-bit signed integer pixels
-        pil_label_id_img = Image.fromarray(
-            np_label_id, mode="L" if dtype == np.uint8 else "I"
-        )
+        pil_label_id_img = Image.fromarray(np_label_id, mode="L" if dtype == np.uint8 else "I")
         return pil_label_id_img
     elif isinstance(rgb_img, np.ndarray):
         return np_label_id
@@ -76,9 +74,7 @@ def save_rgb_to_label_id(
 
     # mode = L: 8-bit unsigned integer pixels
     # mode = I: 32-bit signed integer pixels
-    pil_label_id_img = Image.fromarray(
-        np_label_id, mode="L" if dtype == np.uint8 else "I"
-    )
+    pil_label_id_img = Image.fromarray(np_label_id, mode="L" if dtype == np.uint8 else "I")
     pil_label_id_img.save(label_id_img)
 
 
@@ -98,9 +94,7 @@ def convert_ymir_to_mmseg(ymir_cfg: edict) -> Dict[str, str]:
     out_dir = ymir_cfg.ymir.output.root_dir
     new_ann_files = dict()
     for split in ["train", "val"]:
-        new_ann_files[split] = osp.join(
-            out_dir, osp.relpath(ymir_ann_files[split], in_dir)
-        )
+        new_ann_files[split] = osp.join(out_dir, osp.relpath(ymir_ann_files[split], in_dir))
 
     new_ann_files["test"] = ymir_ann_files["test"]
     # call before ddp, avoid multi-process problem, just to return new_ann_files

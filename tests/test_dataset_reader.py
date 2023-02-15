@@ -72,9 +72,7 @@ class TestDatasetReader(unittest.TestCase):
     def test_00(self) -> None:
         training_list = list(dr.item_paths(dataset_type=env.DatasetType.TRAINING))
         self.assertEqual(len(training_list), 3)  # have 3 items
-        self.assertEqual(
-            len(training_list[0]), 2
-        )  # each item have asset and annotations
+        self.assertEqual(len(training_list[0]), 2)  # each item have asset and annotations
 
         try:
             dr.item_paths(dataset_type=env.DatasetType.VALIDATION)

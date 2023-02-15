@@ -14,9 +14,7 @@ from tqdm import tqdm
 def get_args():
     parser = argparse.ArgumentParser("convert eg1800 dataset to ymir")
     parser.add_argument("--root_dir", help="root dir for eg1800 dataset")
-    parser.add_argument(
-        "--split", default="train", help="split for dataset", choices=["train", "test"]
-    )
+    parser.add_argument("--split", default="train", help="split for dataset", choices=["train", "test"])
     parser.add_argument("--out_dir", help="the output directory", default="./out")
     parser.add_argument("--num", help="sample number for dataset", default=0, type=int)
 
@@ -41,7 +39,7 @@ def main():
         lines = fp.readlines()
 
     if args.num > 0:
-        lines = lines[0 : args.num]
+        lines = lines[0:args.num]
 
     random.seed(25)
     for line in tqdm(lines):

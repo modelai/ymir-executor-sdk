@@ -102,12 +102,8 @@ def convert_ymir_to_yolov5(cfg: edict, out_dir: str = None) -> str:
     out_dir = out_dir or cfg.ymir.output.root_dir
     if cfg.ymir.run_training:
         Path(osp.join(out_dir, "images")).symlink_to(cfg.ymir.input.assets_dir)
-    data = dict(
-        path=out_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names
-    )
-    for split, prefix in zip(
-        ["train", "val", "test"], ["training", "val", "candidate"]
-    ):
+    data = dict(path=out_dir, nc=len(cfg.param.class_names), names=cfg.param.class_names)
+    for split, prefix in zip(["train", "val", "test"], ["training", "val", "candidate"]):
         src_file = getattr(cfg.ymir.input, f"{prefix}_index_file")
         if osp.exists(src_file) and split in ["train", "val"]:
             with open(src_file, "r") as fp:
