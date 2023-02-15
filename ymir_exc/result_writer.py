@@ -3,7 +3,7 @@ import logging
 import os
 import time
 import warnings
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 from deprecated.sphinx import deprecated, versionchanged
@@ -47,125 +47,80 @@ def multiple_model_stages_supportable() -> bool:
             return False
 
 
-@versionchanged(
-    version="2.0.0",
-    reason="support segmentation metrics and custom metrics",
-)
 def write_model_stage(stage_name: str,
                       files: List[str],
-                      evaluation_result: Dict[str, Union[float, int]] = {},
-                      mAP: Optional[float] = None,
+                      mAP: float,
                       timestamp: Optional[int] = None,
-                      attachments: Optional[Dict[str, List[str]]] = None,
-                      evaluate_config: Optional[dict] = None) -> None:
+                      attachments: Optional[Dict[str, List[str]]] = None) -> None:
     """
     Write model stage and model attachments
     Args:
         stage_name (str): name to this model stage
         files (List[str]): model file names for this stage
             All files should under directory: `/out/models`
-        mAP (float): mean average precision of this stage, depracated
-        evaluation_result (Dict[str, Union[float, int]]):
-            detection example: `{'mAP': 0.65}`
-            evaluation result of this stage, it contains:
-                mAP (float, required): mean average precision
-                mAR (float, optional): mean average recall
-                tp (int, optional): true positive box count
-                fp (int, optional): false positive box count
-                fn (int, optional): false negative box count
-            semantic segmentation example: {'mIoU': 0.78}
-            instance segmentation example: {'maskAP': 0.6}
+        mAP (float): mean average precision of this stage
         timestamp (int): timestamp (in seconds)
-        evaluate_config (dict): configurations used to evaluate this model, which contains:
-            iou_thr (float): iou threshold
-            conf_thr (float): confidence threshold
         attachments: attachment files, All files should under
             directory: `/out/models`
     """
     if not stage_name or not files:
-        raise ValueError("empty stage_name or files")
+        raise ValueError('empty stage_name or files')
 
-    stage_name = stage_name.replace("-", "_")
+    stage_name = stage_name.replace('-', '_')
     if not stage_name.isidentifier():
         raise ValueError(
             f"invalid stage_name: {stage_name}, need alphabets, numbers and underlines, start with alphabets")
 
-    if not evaluation_result:
-        if mAP is None:
-            raise Exception('please specify evaluation_result')
-        else:
-            evaluation_result = {'mAP': mAP}
-            warnings.warn('please use evaluation_result instead of mAP')
-
-    if 'maskAP' in evaluation_result:
-        top1_metric = 'maskAP'
-    elif 'mIoU' in evaluation_result:
-        top1_metric = 'mIoU'
-    elif 'mAP' in evaluation_result:
-        top1_metric = 'mAP'
-    else:
-        raise Exception(f'unknown evaluation_result {evaluation_result}, without one of [maskAP, mIoU, mAP]')
-
-    training_result: dict = ({})  # key: stage name, value: stage name, files, timestamp, mAP
+    training_result: dict = {}  # key: stage name, value: stage name, files, timestamp, mAP
 
     env_config = env.get_current_env()
     try:
-        with open(env_config.output.training_result_file, "r") as f:
+        with open(env_config.output.training_result_file, 'r') as f:
             training_result = yaml.safe_load(stream=f)
     except FileNotFoundError:
         pass  # will create new if not exists, so dont care this exception
 
     if multiple_model_stages_supportable():
-        model_stages = training_result.get("model_stages", {})
+        model_stages = training_result.get('model_stages', {})
         # stage_name --> intermediate
         model_stages[stage_name] = {
-            "stage_name": stage_name,
-            "files": files,
-            "timestamp": timestamp or int(time.time()),
-            **evaluation_result,
+            'stage_name': stage_name,
+            'files': files,
+            'timestamp': timestamp or int(time.time()),
+            'mAP': mAP
         }
 
         # best stage
-        sorted_model_stages = sorted(
-            model_stages.values(),
-            key=lambda x: (x.get(top1_metric, 0), x.get("timestamp", 0)),
-        )
-        training_result["best_stage_name"] = sorted_model_stages[-1]["stage_name"]
-
-        # history code from ymir/sample_executor, 😢
-        best_top1_metric = top1_metric if top1_metric != 'mAP' else 'map'
-        training_result[best_top1_metric] = sorted_model_stages[-1][top1_metric]
+        sorted_model_stages = sorted(model_stages.values(), key=lambda x: (x.get('mAP', 0), x.get('timestamp', 0)))
+        training_result['best_stage_name'] = sorted_model_stages[-1]['stage_name']
+        training_result['map'] = sorted_model_stages[-1]['mAP']
 
         # if too many stages, remove a earlest one
         if len(model_stages) > _MAX_MODEL_STAGES_COUNT_:
-            sorted_model_stages = sorted(model_stages.values(), key=lambda x: x.get("timestamp", 0))
-            del_stage_name = sorted_model_stages[0]["stage_name"]
-            if del_stage_name == training_result["best_stage_name"]:
-                del_stage_name = sorted_model_stages[1]["stage_name"]
+            sorted_model_stages = sorted(model_stages.values(), key=lambda x: x.get('timestamp', 0))
+            del_stage_name = sorted_model_stages[0]['stage_name']
+            if del_stage_name == training_result['best_stage_name']:
+                del_stage_name = sorted_model_stages[1]['stage_name']
             del model_stages[del_stage_name]
             logging.info(f"data_writer removed model stage: {del_stage_name}")
-        training_result["model_stages"] = model_stages
+        training_result['model_stages'] = model_stages
 
         # attachments, replace old value if valid
         if attachments:
-            training_result["attachments"] = attachments
-
-        # evaluate config
-        if evaluate_config:
-            training_result['evaluate_config'] = evaluate_config
+            training_result['attachments'] = attachments
     else:
-        warnings.warn("mutiple model stages is not supported, use write_training_result() instead")
-        _files = training_result.get("model", [])
+        warnings.warn('mutiple model stages is not supported, use write_training_result() instead')
+        _files = training_result.get('model', [])
 
         training_result = {
-            "model": list(set(files + _files)),
-            "timestamp": timestamp or int(time.time()),
-            "stage_name": stage_name,
-            **evaluation_result
+            'model': list(set(files + _files)),
+            'map': mAP,
+            'timestamp': timestamp or int(time.time()),
+            'stage_name': stage_name
         }
 
     # save all
-    with open(env_config.output.training_result_file, "w") as f:
+    with open(env_config.output.training_result_file, 'w') as f:
         yaml.safe_dump(data=training_result, stream=f)
 
 

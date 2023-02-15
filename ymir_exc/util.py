@@ -330,27 +330,12 @@ def write_ymir_training_result(
     cfg: edict,
     files: List[str],
     id: str,
-    map50: Optional[float] = None,
-    evaluation_result: Dict[str, Union[float, int]] = {},
-    evaluate_config: Optional[dict] = None,
+    map50: float,
     attachments: Optional[Dict[str, List[str]]] = None,
 ) -> None:
     """write training result to disk for ymir
     cfg: ymir merged config, view get_merged_config()
-    evaluation_result (Dict[str, Union[float, int]]):
-            detection example: `{'mAP': 0.65, ...}`
-            evaluation result of this stage, it contains:
-                mAP (float, required): mean average precision
-                mAR (float, optional): mean average recall
-                tp (int, optional): true positive box count
-                fp (int, optional): false positive box count
-                fn (int, optional): false negative box count
-            semantic segmentation example: {'mIoU': 0.78, ...}
-            instance segmentation example: {'maskAP': 0.6, ...}
-    evaluate_config (dict): configurations used to evaluate this model, which contains:
-            iou_thr (float): iou threshold
-            conf_thr (float): confidence threshold
-    map50: evaluation result, depracated
+    map50: evaluation result
     files: weight and related files to save, [] means save all files in /out/models
     id: weight name to distinguish models from different epoch/step
     attachments: attachment files, All files should under
@@ -363,13 +348,7 @@ def write_ymir_training_result(
             if id.isnumeric():
                 warnings.warn(f"use stage_{id} instead {id} for stage name")
                 id = f"stage_{id}"
-            _write_latest_ymir_training_result(cfg=cfg,
-                                               map50=map50,
-                                               id=id,
-                                               files=files,
-                                               evaluation_result=evaluation_result,
-                                               evaluate_config=evaluate_config,
-                                               attachments=attachments)
+            _write_latest_ymir_training_result(cfg=cfg, map50=map50, id=id, files=files, attachments=attachments)
         else:
             if map50:
                 _write_earliest_ymir_training_result(cfg, float(map50), id, files)
@@ -381,20 +360,13 @@ def _write_latest_ymir_training_result(
     cfg: edict,
     id: str,
     files: List[str],
-    evaluation_result: Dict[str, Union[float, int]] = {},
-    evaluate_config: Optional[dict] = None,
-    map50: Optional[float] = None,
+    map50: float,
     attachments: Optional[Dict[str, List[str]]] = None,
 ) -> None:
     """
     for ymir>=1.2.0
     """
-    rw.write_model_stage(stage_name=id,
-                         files=files,
-                         evaluation_result=evaluation_result,
-                         evaluate_config=evaluate_config,
-                         mAP=map50,
-                         attachments=attachments)
+    rw.write_model_stage(stage_name=id, files=files, mAP=map50, attachments=attachments)
 
 
 def _write_earliest_ymir_training_result(cfg: edict, map50: float, id: str, files: List[str]) -> None:

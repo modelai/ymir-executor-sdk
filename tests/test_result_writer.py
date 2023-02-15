@@ -100,14 +100,13 @@ class TestResultWriter(unittest.TestCase):
         files = ['best.pt', 'config.py']
 
         N = len(stage_names)
-        for metric in ['mAP', 'mIoU', 'maskAP']:
+        for metric in ['mAP']:
             # remove training result file
             if os.path.exists(self._training_result_file):
                 os.system(f'rm {self._training_result_file}')
 
             for idx, stage_name in enumerate(stage_names):
-                evaluation_result = {metric: idx / len(stage_names)}
-                rw.write_model_stage(stage_name=stage_name, files=files, evaluation_result=evaluation_result)
+                rw.write_model_stage(stage_name=stage_name, files=files, mAP=idx / len(stage_names))
 
             with open(self._training_result_file, 'r') as fr:
                 result_obj = yaml.safe_load(fr)
