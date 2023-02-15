@@ -3,4 +3,5 @@
 # you can change the location of this file IF AND ONLY IF you are doing test
 import os
 
-DEFAULT_ENV_FILE_PATH = os.getenv("DEFAULT_ENV_FILE_PATH", '/in/env.yaml')
+DEFAULT_ENV_FILE_PATH = os.getenv("DEFAULT_ENV_FILE_PATH", "/in/env.yaml")
+DEFAULT_CONFIG_FILE_PATH = os.getenv("DEFAULT_CONFIG_FILE_PATH", "/in/config.yaml")

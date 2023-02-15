@@ -1,14 +1,14 @@
 from setuptools import find_packages, setup
 
-__version__ = '1.3.1.1101'
+__version__ = "2.1.1.0215"
 
 requirements = []
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     for line in f.read().splitlines():
         requirements.append(line)
 
 setup(
-    name='ymir-exc',
+    name="ymir-exc",
     version=__version__,
     python_requires=">=3.6",
     install_requires=requirements,

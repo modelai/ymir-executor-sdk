@@ -3,7 +3,7 @@
 ## contents of env.yaml
 ```
 task_id: t000000100000166d7761660213748
-protocol_version: 1.0.0
+protocol_version: 2.0.0
 run_training: true
 run_mining: false
 run_infer: false
@@ -61,44 +61,59 @@ class DatasetType(IntEnum):
 
 
 class EnvInputConfig(BaseModel):
-    root_dir: str = '/in'
-    assets_dir: str = '/in/assets'
-    annotations_dir: str = '/in/annotations'
-    models_dir: str = '/in/models'
-    training_index_file: str = ''
-    val_index_file: str = ''
-    candidate_index_file: str = ''
-    config_file: str = '/in/config.yaml'
+    root_dir: str = "/in"
+    assets_dir: str = "/in/assets"
+    annotations_dir: str = "/in/annotations"
+    models_dir: str = "/in/models"
+    training_index_file: str = ""
+    val_index_file: str = ""
+    candidate_index_file: str = ""
+    config_file: str = settings.DEFAULT_CONFIG_FILE_PATH
 
 
 class EnvOutputConfig(BaseModel):
-    root_dir: str = '/out'
-    models_dir: str = '/out/models'
-    tensorboard_dir: str = '/out/tensorboard'
-    training_result_file: str = '/out/models/result.yaml'
-    mining_result_file: str = '/out/result.tsv'
-    infer_result_file: str = '/out/infer-result.json'
-    monitor_file: str = '/out/monitor.txt'
-    executor_log_file: str = '/out/ymir-executor-out.log'
+    root_dir: str = "/out"
+    models_dir: str = "/out/models"
+    tensorboard_dir: str = "/out/tensorboard"
+    training_result_file: str = "/out/models/result.yaml"
+    mining_result_file: str = "/out/result.tsv"
+    infer_result_file: str = "/out/infer-result.json"
+    monitor_file: str = "/out/monitor.txt"
+    executor_log_file: str = "/out/ymir-executor-out.log"
 
 
 class EnvConfig(BaseModel):
-    task_id: str = 'default-task'
-    protocol_version: str = '0.0.1'  # input/output api version
+    task_id: str = "default-task"
+    protocol_version: str = "0.0.1"  # input/output api version
     run_training: bool = False
     run_mining: bool = False
     run_infer: bool = False
 
+    manifest_file: str = '/img-man/manifest.yaml'
     input: EnvInputConfig = EnvInputConfig()
     output: EnvOutputConfig = EnvOutputConfig()
 
 
 def get_current_env() -> EnvConfig:
-    with open(settings.DEFAULT_ENV_FILE_PATH, 'r') as f:
+    with open(settings.DEFAULT_ENV_FILE_PATH, "r") as f:
         return EnvConfig.parse_obj(yaml.safe_load(f.read()))
 
 
 def get_executor_config() -> dict:
-    with open(get_current_env().input.config_file, 'r') as f:
+    with open(get_current_env().input.config_file, "r") as f:
         executor_config = yaml.safe_load(f)
     return executor_config
+
+
+def get_manifest_object_type() -> int:
+    """
+    2: object detection
+    3: semantic segmentation
+    4: instance segmentation
+    """
+    try:
+        with open(get_current_env().manifest_file, 'r') as f:
+            content = yaml.safe_load(f.read())
+        return int(content['object_type'])
+    except (FileNotFoundError, KeyError):
+        return 2

@@ -3,7 +3,6 @@ import shutil
 import unittest
 
 import yaml
-
 from ymir_exc import dataset_reader as dr
 from ymir_exc import env, settings
 
@@ -12,9 +11,9 @@ class TestDatasetReader(unittest.TestCase):
     # life cycle
     def __init__(self, methodName: str = ...) -> None:  # type: ignore
         super().__init__(methodName)
-        self._test_root = os.path.join('/tmp', 'test_tmi', *self.id().split(".")[-3:])
-        self._custom_env_file = os.path.join(self._test_root, 'env.yml')
-        self._training_index_file = os.path.join(self._test_root, 'training-index.tsv')
+        self._test_root = os.path.join("/tmp", "test_tmi", *self.id().split(".")[-3:])
+        self._custom_env_file = os.path.join(self._test_root, "env.yml")
+        self._training_index_file = os.path.join(self._test_root, "training-index.tsv")
 
     def setUp(self) -> None:
         settings.DEFAULT_ENV_FILE_PATH = self._custom_env_file
@@ -35,35 +34,35 @@ class TestDatasetReader(unittest.TestCase):
     def _prepare_assets(self) -> None:
         # env
         env_obj = {
-            'task_id': 'task0',
-            'run_training': True,
-            'run_mining': False,
-            'run_infer': False,
-            'input': {
-                'root_dir': '/in1',
-                'assets_dir': '/in1/assets',
-                'annotations_dir': '/in1/annotations',
-                'models_dir': '/in1/models',
-                'training_index_file': self._training_index_file,
+            "task_id": "task0",
+            "run_training": True,
+            "run_mining": False,
+            "run_infer": False,
+            "input": {
+                "root_dir": "/in1",
+                "assets_dir": "/in1/assets",
+                "annotations_dir": "/in1/annotations",
+                "models_dir": "/in1/models",
+                "training_index_file": self._training_index_file,
             },
-            'output': {
-                'root_dir': '/out1',
-                'models_dir': '/out1/models',
-                'tensorboard_dir': '/out1/tensorboard',
-                'training_result_file': '/out1/models/result.tsv',
-                'mining_result_file': '/out1/result.txt',
-                'infer_result_file': '/out1/infer-result.json',
-                'monitor_file': '/out1/monitor.txt',
+            "output": {
+                "root_dir": "/out1",
+                "models_dir": "/out1/models",
+                "tensorboard_dir": "/out1/tensorboard",
+                "training_result_file": "/out1/models/result.tsv",
+                "mining_result_file": "/out1/result.txt",
+                "infer_result_file": "/out1/infer-result.json",
+                "monitor_file": "/out1/monitor.txt",
             },
         }
-        with open(self._custom_env_file, 'w') as f:
+        with open(self._custom_env_file, "w") as f:
             yaml.safe_dump(env_obj, f)
 
         # training index
-        with open(self._training_index_file, 'w') as f:
-            f.write('/in/assets/0.jpg\t/in/assets/0.txt\n')
-            f.write('/in/assets/1.jpg\t/in/assets/1.txt\n')
-            f.write('/in/assets/2.jpg\t/in/assets/2.txt\n')
+        with open(self._training_index_file, "w") as f:
+            f.write("/in/assets/0.jpg\t/in/assets/0.txt\n")
+            f.write("/in/assets/1.jpg\t/in/assets/1.txt\n")
+            f.write("/in/assets/2.jpg\t/in/assets/2.txt\n")
 
     def _deprepare_dirs(self) -> None:
         if os.path.isdir(self._test_root):
@@ -82,3 +81,7 @@ class TestDatasetReader(unittest.TestCase):
             dr.item_paths(dataset_type=env.DatasetType.CANDIDATE)
         except Exception as e:
             self.assertTrue(isinstance(e, ValueError))
+
+    def test_items_count(self) -> None:
+        N = dr.items_count(env.DatasetType.TRAINING)
+        self.assertEqual(N, 3)
