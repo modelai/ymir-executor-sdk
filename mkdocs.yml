@@ -19,6 +19,7 @@ markdown_extensions:
       permalink: "#"
 #  - sane_lists
 nav:
+  - index.md
   - read.md
   - write.md
   - dataset_convert.md
