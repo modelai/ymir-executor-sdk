@@ -6,7 +6,7 @@ import warnings
 from typing import Dict, List, Optional, Tuple, Union
 
 import yaml
-from deprecated.sphinx import deprecated, versionchanged
+from deprecated.sphinx import versionadded, versionchanged
 from packaging.version import Version
 from pydantic import BaseModel
 
@@ -172,31 +172,44 @@ def write_model_stage(stage_name: str,
         yaml.safe_dump(data=training_result, stream=f)
 
 
-@deprecated(
-    version="1.3.0",
-    reason="This method is deprecated, recommand use write_model_stage() instead",
+@versionadded(
+    version="2.1.0",
+    reason="support segmentation metrics and custom metrics",
 )
-def write_training_result(model_names: List[str], mAP: float, **kwargs: dict) -> None:
-    if multiple_model_stages_supportable():
-        warnings.warn("multiple model stages is supported, use write_model_stage() instead")
-        write_model_stage(stage_name="default_best_stage", files=model_names, mAP=mAP)
-    else:
-        training_result = {"model": model_names, "map": mAP}
-        training_result.update(kwargs)
+def write_training_result(stage_name: str,
+                          files: List[str],
+                          evaluation_result: Dict[str, Union[float, int]] = {},
+                          timestamp: Optional[int] = None,
+                          attachments: Optional[Dict[str, List[str]]] = None,
+                          evaluate_config: Optional[dict] = None) -> None:
+    """write training result to training result file
 
-        env_config = env.get_current_env()
-        with open(env_config.output.training_result_file, "w") as f:
-            yaml.safe_dump(training_result, f)
+    if exist result in training result file, new result will append to file
+    """
+    write_model_stage(stage_name=stage_name,
+                      files=files,
+                      evaluation_result=evaluation_result,
+                      timestamp=timestamp,
+                      attachments=attachments,
+                      evaluate_config=evaluate_config)
 
 
 def write_mining_result(mining_result: List[Tuple[str, float]]) -> None:
+    """write mining result to mining_result_file
+
+    Parameters
+    ----------
+    mining_result : List[Tuple[str, float]]
+        - image_path: str
+        - score: float
+    """
     # sort desc by score
     sorted_mining_result = sorted(mining_result, reverse=True, key=(lambda v: v[1]))
 
     env_config = env.get_current_env()
     with open(env_config.output.mining_result_file, "w") as f:
-        for asset_id, score in sorted_mining_result:
-            f.write(f"{asset_id}\t{score}\n")
+        for img_path, score in sorted_mining_result:
+            f.write(f"{img_path}\t{score}\n")
 
 
 @versionchanged(
