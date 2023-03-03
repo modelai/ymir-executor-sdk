@@ -1,6 +1,6 @@
 # ymir-exc
 
-![build status](https://github.com/modelai/ymir-executor-sdk/actions/workflows/ci.yml/badge.svg?branch=ymir-dev)
+![build status](https://github.com/modelai/ymir-executor-sdk/actions/workflows/ci.yml/badge.svg?branch=ymir2.1.0)
 
 ## documence
 
