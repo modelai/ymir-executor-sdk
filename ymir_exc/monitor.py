@@ -17,6 +17,13 @@ class YmirTask(IntEnum):
 
 
 def write_monitor_logger(percent: float) -> None:
+    """write the execution progress percentage of the task to monitor file.
+
+    Parameters
+    ----------
+    percent : float
+         the execution progress percentage of the task, range in [0, 1]
+    """
     env_config = env.get_current_env()
     with open(env_config.output.monitor_file, "w") as f:
         f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{TASK_STATE_RUNNING}\n")

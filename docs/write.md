@@ -1,10 +1,12 @@
-# write function
+# 将结果写回ymir平台
 
-update 2022/10/27
+2023/03/01 更新
 
-## monitor process
+## 写进度
 
-write a float `percent` to `cfg.ymir.output.monitor_file` (/out/monitor.txt)
+::: ymir_exc.monitor.write_monitor_logger
+
+将任务进度百分比 `percent` 写到监控文件 `cfg.ymir.output.monitor_file` (/out/monitor.txt) 中
 
 ```
 from ymir_exc import monitor
@@ -12,7 +14,76 @@ from ymir_exc import monitor
 monitor.write_monitor_logger(percent)
 ```
 
-## write monitor for multiple tasks
+## 保存训练日志(tensorboard)
+
+需要将tensorboard 日志文件保存到指定目录 `cfg.ymir.output.tensorboard_dir` (/out/tensorboard) 中
+
+## 保存训练结果
+
+::: ymir_exc.result_writer.write_training_result
+
+将验证集评测指标及相关文件保存到结果文件 `cfg.ymir.output.training_result_file` (/out/models/result.yaml) 中
+
+```
+from ymir_exc import result_writer
+
+## 目标检测结果
+result_writer.write_training_result(stage_name='best', files=['best.pt', 'best.onnx', 'config.yaml'], evaluation_result=dict(mAP=0.8))
+
+## 语义分割结果
+result_writer.write_training_result(stage_name='best', files=['best.pt', 'best.onnx', 'config.yaml'], evaluation_result=dict(mIoU=0.8))
+
+## 实例分割结果
+result_writer.write_training_result(stage_name='best', files=['best.pt', 'best.onnx', 'config.yaml'], evaluation_result=dict(maskAP=0.8))
+```
+
+### 保存多组训练结果
+```
+from ymir_exc import result_writer
+
+result_writer.write_training_result(stage_name='epoch_10', files=['epoch_10.pt', 'config.yaml'], evaluation_result=dict(mAP=0.82))
+
+result_writer.write_training_result(stage_name='epoch_20', files=['epoch_20.pt', 'config.yaml'], evaluation_result=dict(mAP=0.84))
+```
+
+## 写挖掘结果
+
+::: ymir_exc.result_writer.write_mining_result
+
+将图像路径与对应分数写到结果文件 `cfg.ymir.output.mining_result_file` (/out/result.tsv) 中
+
+```
+from ymir_exc import result_writer
+
+result_writer.write_mining_result(mining_result=[(img_path1, 0.8), (img_path2, 0.6)])
+```
+
+## 写推理结果
+
+::: ymir_exc.result_writer.write_infer_result
+
+将图像路径与对应推理结果写到 `cfg.ymir.output.infer_result_file` (/out/infer-result.json)
+
+```
+from ymir_exc import result_writer
+from ymir_exc.result_writer import Annotation, Box
+
+## 目标检测结果
+ann1 = Annotation(class_name = 'dog', score = 0.8, box = Box(x=10, y=20, w=10, h=10))
+ann2 = Annotation(class_name = 'cat', score = 0.6, box = Box(x=10, y=20, w=10, h=10))
+result_writer.write_infer_result(infer_result=dict(img_path1=[ann1, ann2], img_path2=[]))
+
+## 语义分割与实例分割结果
+coco_result = dict()
+...
+result_writer.write_infer_result(infer_result=coco_result, algorithm='segmentation')
+```
+
+## 进阶功能
+
+### 写进度，考虑多个过程
+
+每个过程有对应的进度，对每个过程进行加权，即为整体进度。
 
 mining and infer can run in the same task.
 we support mining process percent in [0, 0.5], infer in [0.5, 1.0]
@@ -39,45 +110,4 @@ if we consider more complicated case, mining task can divide into preprocess, ta
 from ymir_exc.util import write_ymir_monitor_process, YmirStage
 
 write_ymir_monitor_process(cfg, task='infer', naive_stage_percent=0.2, stage=YmirStage.PREPROCESS, stage_weights = [0.1, 0.8, 0.1], task_order='tmi')
-```
-
-## write training result
-
-write `map` (map@0.5) and files to `cfg.ymir.output.training_result_file` (/out/models/result.yaml)
-
-```
-from ymir_exc import result_writer
-
-result_writer.write_training_result(model_names=['best.pt', 'best.onnx', 'config.yaml'], mAP=0.8)
-```
-
-for complicated case, you want to save multiple stand-alone weight files
-```
-from ymir_exc.util import write_ymir_training_result
-
-write_ymir_training_result(cfg, map50=0.8, files=['epoch10.pt', 'config.yaml'], id='epoch_10')
-
-write_ymir_training_result(cfg, map50=0.9, files=['epoch20.pt', 'config.yaml'], id='epoch_20')
-```
-
-## write mining result
-
-write image with mining score to `cfg.ymir.output.mining_result_file` (/out/result.tsv)
-
-```
-from ymir_exc import result_writer
-
-result_writer.write_mining_result(mining_result=[(img_path1, 0.8), (img_path2, 0.6)])
-```
-
-## write infer result
-
-write image filename with prediction result to `cfg.ymir.output.infer_result_file` (/out/infer-result.json)
-
-```
-from ymir_exc import result_writer
-from ymir_exc.result_writer import Annotation, Box
-
-ann1 = Annotation(class_name = 'dog', score = 0.8, box = Box(x=10, y=20, w=10, h=10))
-result_writer.write_infer_result(infer_result=dict(img_path1=[ann1, ann1, ann1], img_path2=[]))
 ```
