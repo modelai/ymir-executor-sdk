@@ -61,8 +61,7 @@ import numpy as np
 # from cityscapesscripts.helpers.labels import labels  # type: ignore
 from cityscapesscripts.preparation.json2labelImg import \
     json2labelImg  # type: ignore
-from tools.seg.pycococreatortools import (create_annotation_info,
-                                          create_image_info)
+from tools.seg.pycococreatortools import (create_annotation_info, create_image_info)
 from tqdm import tqdm  # type: ignore
 
 

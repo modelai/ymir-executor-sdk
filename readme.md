@@ -1,5 +1,7 @@
 # ymir-exc
 
+![build status](https://github.com/modelai/ymir-executor-sdk/actions/workflows/ci.yml/badge.svg?branch=ymir-dev)
+
 ## documence
 
 - [read](docs/read.md)
