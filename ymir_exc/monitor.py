@@ -30,20 +30,6 @@ def write_monitor_logger(percent: float,
         f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{state}\t{int(return_code)}\n")
 
 
-# def write_monitor_logger(percent: float) -> None:
-#     """write the execution progress percentage of the task to monitor file.
-
-#     Parameters
-#     ----------
-#     percent : float
-#          the execution progress percentage of the task, range in [0, 1]
-#     """
-#     env_config = env.get_current_env()
-#     TASK_STATE_RUNNING = int(ExecutorState.ES_RUNNING)
-#     with open(env_config.output.monitor_file, "w") as f:
-#         f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{TASK_STATE_RUNNING}\n")
-
-
 def write_monitor_logger_for_multiple_tasks(cfg: edict,
                                             task: Union[YmirTask, str],
                                             percent: float,
