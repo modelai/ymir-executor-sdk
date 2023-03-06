@@ -1,6 +1,6 @@
 # ymir-exc
 
-![test status](https://img.shields.io/badge/test-passing-brightgreen.svg)
+![test status](https://github.com/modelai/ymir-executor-sdk/workflows/CI/badge.svg)
 
 -  🏠 [YMIR](https://github.com/IndustryEssentials/ymir)
 
