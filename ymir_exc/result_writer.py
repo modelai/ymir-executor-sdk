@@ -134,10 +134,7 @@ def write_model_stage(stage_name: str,
             key=lambda x: (x.get(top1_metric, 0), x.get("timestamp", 0)),
         )
         training_result["best_stage_name"] = sorted_model_stages[-1]["stage_name"]
-
-        # history code from ymir/sample_executor, 😢
-        best_top1_metric = top1_metric if top1_metric != 'mAP' else 'map'
-        training_result[best_top1_metric] = sorted_model_stages[-1][top1_metric]
+        training_result[top1_metric] = sorted_model_stages[-1][top1_metric]
 
         # ymir2.0.2 support semantic/instance segmentaiton
         training_result['object_type'] = env.get_manifest_object_type()
