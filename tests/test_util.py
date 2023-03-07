@@ -144,7 +144,7 @@ class TestWriteResult(unittest.TestCase):
         if os.path.isdir(self._test_root):
             shutil.rmtree(self._test_root)
 
-    def test_write_ymir_traing_result(self) -> None:
+    def test_write_ymir_training_result(self) -> None:
 
         def check_training_result(cfg):
             with open(cfg.ymir.output.training_result_file, "r") as f:

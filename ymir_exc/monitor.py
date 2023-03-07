@@ -6,8 +6,7 @@ from easydict import EasyDict as edict
 from tensorboardX import SummaryWriter
 
 from ymir_exc import env
-
-TASK_STATE_RUNNING = 2
+from ymir_exc.code import ExecutorReturnCode, ExecutorState
 
 
 class YmirTask(IntEnum):
@@ -16,10 +15,19 @@ class YmirTask(IntEnum):
     INFER = 3
 
 
-def write_monitor_logger(percent: float) -> None:
+def write_monitor_logger(percent: float,
+                         state: ExecutorState = ExecutorState.ES_RUNNING,
+                         return_code: ExecutorReturnCode = ExecutorReturnCode.RC_EXEC_NO_ERROR) -> None:
+    """write the execution progress percentage of the task to monitor file.
+
+    Parameters
+    ----------
+    percent : float
+         the execution progress percentage of the task, range in [0, 1]
+    """
     env_config = env.get_current_env()
-    with open(env_config.output.monitor_file, "w") as f:
-        f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{TASK_STATE_RUNNING}\n")
+    with open(env_config.output.monitor_file, 'w') as f:
+        f.write(f"{env_config.task_id}\t{time.time()}\t{percent:.2f}\t{state}\t{int(return_code)}\n")
 
 
 def write_monitor_logger_for_multiple_tasks(cfg: edict,

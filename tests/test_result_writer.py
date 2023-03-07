@@ -59,11 +59,10 @@ class TestResultWriter(unittest.TestCase):
             shutil.rmtree(self._test_root)
 
     # protected: check results
-    def _check_training_result(self, model_names: List[str], mAP: float) -> None:
+    def _check_training_result(self, files: List[str], mAP: float) -> None:
         with open(self._training_result_file, "r") as f:
             result_obj = yaml.safe_load(f)
-            # self.assertEqual(result_obj["model"], model_names)
-            self.assertEqual(result_obj["map"], mAP)
+            self.assertEqual(result_obj["mAP"], mAP)
 
     def _check_mining_result(self, mining_result: List[Tuple[str, float]]) -> None:
         with open(self._mining_result_file, "r") as f:
@@ -79,11 +78,11 @@ class TestResultWriter(unittest.TestCase):
             self.assertEqual(set(infer_result_obj["detection"].keys()), set(infer_result.keys()))
 
     def test_write_training_result(self) -> None:
-        model_names = ["model-symbols.json", "model-0000.params"]
+        files = ["model-symbols.json", "model-0000.params"]
         mAP = 0.86
-        rw.write_training_result(model_names=model_names, mAP=mAP)  # type: ignore
+        rw.write_training_result(stage_name='best', files=files, evaluation_result=dict(mAP=mAP))  # type: ignore
         self._check_training_result(
-            model_names=model_names,
+            files=files,
             mAP=mAP,
         )  # type ignore
 
@@ -104,8 +103,7 @@ class TestResultWriter(unittest.TestCase):
             with open(self._training_result_file, 'r') as fr:
                 result_obj = yaml.safe_load(fr)
 
-            best_top1_metric = metric if metric != 'mAP' else 'map'
-            self.assertTrue(math.isclose(result_obj[best_top1_metric], (N - 1) / N))
+            self.assertTrue(math.isclose(result_obj[metric], (N - 1) / N))
             self.assertEqual(result_obj['best_stage_name'], stage_names[-1])
             for stage_name in result_obj['model_stages']:
                 self.assertIn(stage_name, stage_names)
