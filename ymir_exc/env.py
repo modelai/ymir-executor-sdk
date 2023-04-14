@@ -103,17 +103,3 @@ def get_executor_config() -> dict:
     with open(get_current_env().input.config_file, "r") as f:
         executor_config = yaml.safe_load(f)
     return executor_config
-
-
-def get_manifest_object_type() -> int:
-    """
-    2: object detection
-    3: semantic segmentation
-    4: instance segmentation
-    """
-    try:
-        with open(get_current_env().manifest_file, 'r') as f:
-            content = yaml.safe_load(f.read())
-        return int(content['object_type'])
-    except (FileNotFoundError, KeyError):
-        return 2

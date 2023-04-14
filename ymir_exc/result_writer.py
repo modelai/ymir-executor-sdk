@@ -136,9 +136,6 @@ def write_model_stage(stage_name: str,
         training_result["best_stage_name"] = sorted_model_stages[-1]["stage_name"]
         training_result[top1_metric] = sorted_model_stages[-1][top1_metric]
 
-        # ymir2.0.2 support semantic/instance segmentaiton
-        training_result['object_type'] = env.get_manifest_object_type()
-
         # if too many stages, remove a earlest one
         if len(model_stages) > _MAX_MODEL_STAGES_COUNT_:
             sorted_model_stages = sorted(model_stages.values(), key=lambda x: x.get("timestamp", 0))
