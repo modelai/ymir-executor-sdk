@@ -30,7 +30,8 @@ def find_blank_area_in_dataset(ymir_cfg: edict, max_sample_num: int = 100) -> bo
         total_mask_area = 0
         for ann_id in ann_ids:
             ann = coco_ann.anns[ann_id]
-            mask_area = maskUtils.area(ann['segmentation'])
+            rle = coco_ann.annToRLE(ann)
+            mask_area = maskUtils.area(rle)
             total_mask_area += mask_area
 
         # total_mask_area < width * height means exist background
